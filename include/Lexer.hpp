@@ -1,5 +1,5 @@
-#ifndef LEXER_H
-#define LEXER_H
+#ifndef REPL_LEXER_H
+#define REPL_LEXER_H
 
 #include <string>
 #include <string_view>
@@ -37,8 +37,8 @@ public:
     Lexer(Lexer&&) = delete;
     ~Lexer() = default;
 
-    Lexer operator=(const Lexer&) = delete;
-    Lexer operator=(Lexer&&) = delete;
+    Lexer& operator=(const Lexer&) = delete;
+    Lexer& operator=(Lexer&&) = delete;
 
     void PrintContent();
     void PrintTokens();
@@ -60,4 +60,4 @@ private:
     size_t StartOfLine{ };
 };
 
-#endif
+#endif // REPL_LEXER_H

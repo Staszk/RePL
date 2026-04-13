@@ -1,28 +1,40 @@
 #include "Lexer.hpp"
+#include <array>
+#include <cctype>
 #include <format>
-#include <unordered_map>
 #include <iostream>
 
-#define TRIM_WHITESPACE 1
 
-#define MAX_BUFFER = 128;
-
-namespace 
+namespace
 {
-    const std::unordered_map<char, TokenKind> CharLiterals =
+	constexpr bool TrimWhitespaceEnabled = true;
+
+    constexpr unsigned char ToUChar(char c) noexcept
     {
-        { '\0', TokenKind::End },
-        { ' ',  TokenKind::Whitespace },
-        { '\n',  TokenKind::NewLine },
-        { '\t',  TokenKind::Tab },
-        { ';',  TokenKind::Semicolon },
-        { ':',  TokenKind::Colon },
-        { ',',  TokenKind::Comma },
-        { '(',  TokenKind::OpenParen },
-        { ')',  TokenKind::CloseParen },
-        { '{',  TokenKind::OpenCurly },
-        { '}',  TokenKind::CloseCurly },
-    };
+        return static_cast<unsigned char>(c);
+    }
+
+    constexpr std::array<TokenKind, 256> MakeCharLiterals()
+    {
+        std::array<TokenKind, 256> literals;
+        literals.fill(TokenKind::Invalid);
+
+        literals[ToUChar('\0')] = TokenKind::End;
+        literals[ToUChar(' ')] = TokenKind::Whitespace;
+        literals[ToUChar('\n')] = TokenKind::NewLine;
+        literals[ToUChar('\t')] = TokenKind::Tab;
+        literals[ToUChar(';')] = TokenKind::Semicolon;
+        literals[ToUChar(':')] = TokenKind::Colon;
+        literals[ToUChar(',')] = TokenKind::Comma;
+        literals[ToUChar('(')] = TokenKind::OpenParen;
+        literals[ToUChar(')')] = TokenKind::CloseParen;
+        literals[ToUChar('{')] = TokenKind::OpenCurly;
+        literals[ToUChar('}')] = TokenKind::CloseCurly;
+
+        return literals;
+    }
+
+    constexpr auto CharLiterals = MakeCharLiterals();
 
     std::string_view TokenKindToText(TokenKind aKind)
     {
@@ -81,12 +93,12 @@ namespace
 			TokenValueToText(aToken.Value), aToken.Loc.Line, aToken.Loc.Col);
     }
 
-	bool StartsIdentifier(char c)
+	bool StartsIdentifier(unsigned char c)
 	{
 		return isalpha(c) || c == '_';
 	}
 
-	bool ContinuesIdentifier(char c)
+	bool ContinuesIdentifier(unsigned char c)
 	{
 		return isalnum(c) || c == '_';
 	}
@@ -94,29 +106,29 @@ namespace
 
 void Lexer::PrintContent()
 {
-    std::puts(std::format("{}", Content).data());
+    std::cout << Content << '\n';
 }
 
 void Lexer::PrintTokens()
 {
-    for (auto& t : Tokens)
+    for (const auto& token : Tokens)
     {
-        std::puts(TokenToText(t).data());
+        std::cout << TokenToText(token) << '\n';
     }
 }
 
 void Lexer::TrimWhitespace()
 {
-    while (QCursorValid() && isspace( Content.at(Cursor) ))
-	{
-		if (Content.at(Cursor) == '\n')
-		{
-			++LineIdx;
+    while (QCursorValid() && std::isspace(ToUChar(Content[Cursor])))
+    {
+        if (Content[Cursor] == '\n')
+        {
+            ++LineIdx;
             StartOfLine = Cursor + 1;
-		}
-		
-		IterateChar();
-	}
+        }
+
+        IterateChar();
+    }
 }
 
 void Lexer::Tokenize()
@@ -129,58 +141,75 @@ void Lexer::Tokenize()
 
 void Lexer::ConstructNext()
 {
-#if TRIM_WHITESPACE
-	TrimWhitespace();
-#endif
-
-    Token token{ };
-
-    const char c = Content.at(Cursor);
-
-    if (CharLiterals.contains(c)) 
+    if constexpr (TrimWhitespaceEnabled)
     {
-        token.Kind = CharLiterals.at(c);
-        token.Value = Content.substr(Cursor, 1);
-		token.Loc = { LineIdx, Cursor - StartOfLine };
-
-#if TRIM_WHITESPACE
-        if (token.Kind == TokenKind::NewLine)
+        TrimWhitespace();
+        if (!QCursorValid())
         {
-            ++LineIdx;
-            StartOfLine = Cursor + 1;
+            return;
         }
-#endif
-		IterateChar();
     }
-    else if (isdigit(c))
+
+    Token token{};
+
+    const char c = Content[Cursor];
+    const TokenKind kind = CharLiterals[ToUChar(c)];
+
+    if (kind != TokenKind::Invalid)
+    {
+        token.Kind = kind;
+        token.Value = Content.substr(Cursor, 1);
+        token.Loc = { LineIdx, Cursor - StartOfLine };
+
+        if constexpr (!TrimWhitespaceEnabled)
+        {
+            if (token.Kind == TokenKind::NewLine)
+            {
+                ++LineIdx;
+                StartOfLine = Cursor + 1;
+            }
+        }
+
+        IterateChar();
+    }
+    else if (std::isdigit(ToUChar(c)))
     {
         token.Kind = TokenKind::IntLiteral;
-        size_t begin = Cursor;
-        while(QCursorValid() && isdigit(PeekCursor())) IterateChar();
+        const size_t begin = Cursor;
+        while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
+        {
+            IterateChar();
+        }
         token.Value = Content.substr(begin, Cursor - begin);
-		token.Loc = { LineIdx, begin - StartOfLine };
+        token.Loc = { LineIdx, begin - StartOfLine };
     }
-    else if (StartsIdentifier(c))
+    else if (StartsIdentifier(ToUChar(c)))
     {
         token.Kind = TokenKind::Identifier;
-        size_t begin = Cursor;
-        while(QCursorValid() && ContinuesIdentifier(PeekCursor())) IterateChar();
+        const size_t begin = Cursor;
+        while (QCursorValid() && ContinuesIdentifier(ToUChar(PeekCursor())))
+        {
+            IterateChar();
+        }
         token.Value = Content.substr(begin, Cursor - begin);
-		token.Loc = { LineIdx, begin - StartOfLine };
+        token.Loc = { LineIdx, begin - StartOfLine };
     }
     else if (c == '#')
     {
         token.Kind = TokenKind::Preprocessor;
-        size_t begin = Cursor;
-        while(QCursorValid() && PeekCursor() != '\n') IterateChar();
+        const size_t begin = Cursor;
+        while (QCursorValid() && PeekCursor() != '\n')
+        {
+            IterateChar();
+        }
         token.Value = Content.substr(begin, Cursor - begin);
-		token.Loc = { LineIdx, begin - StartOfLine };
+        token.Loc = { LineIdx, begin - StartOfLine };
     }
     else
     {
         token.Value = Content.substr(Cursor, 1);
-		token.Loc = { LineIdx, Cursor - StartOfLine };
-		IterateChar();
+        token.Loc = { LineIdx, Cursor - StartOfLine };
+        IterateChar();
     }
 
     PushToken(std::move(token));
