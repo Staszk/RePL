@@ -18,11 +18,13 @@ enum class TokenKind : uint8_t
     // Keywords and Identifiers
     Keyword, Identifier,
     // Literals
-    IntLiteral, StringLiteral,
+    IntLiteral, FloatLiteral, StringLiteral, CharLiteral,
     // Preprocessor
     Preprocessor,
     // Single Character Literals
-    Semicolon, Colon, Comma, OpenParen, CloseParen, OpenCurly, CloseCurly,
+    Semicolon, Colon, Comma, Period,
+    OpenParen, CloseParen, OpenCurly, CloseCurly,
+    OpenBracket, CloseBracket, OpenAngle, CloseAngle,
 };
 
 /**

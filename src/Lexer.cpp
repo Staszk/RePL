@@ -36,10 +36,15 @@ namespace
         literals[ToUChar(';')]  = TokenKind::Semicolon;
         literals[ToUChar(':')]  = TokenKind::Colon;
         literals[ToUChar(',')]  = TokenKind::Comma;
+        literals[ToUChar('.')]  = TokenKind::Period;
         literals[ToUChar('(')]  = TokenKind::OpenParen;
         literals[ToUChar(')')]  = TokenKind::CloseParen;
         literals[ToUChar('{')]  = TokenKind::OpenCurly;
         literals[ToUChar('}')]  = TokenKind::CloseCurly;
+        literals[ToUChar('[')]  = TokenKind::OpenBracket;
+        literals[ToUChar(']')]  = TokenKind::CloseBracket;
+        literals[ToUChar('<')]  = TokenKind::OpenAngle;
+        literals[ToUChar('>')]  = TokenKind::CloseAngle;
 
         return literals;
     }
@@ -52,13 +57,13 @@ namespace
      * @param aKind The token kind to convert.
      * @return The token kind text label.
      */
-    std::string_view TokenKindToText(TokenKind aKind)
+    constexpr std::string_view TokenKindToText(TokenKind aKind)
     {
         switch (aKind)
         {
         using enum TokenKind;
-        case End:            return "End";
         case Invalid:        return "Invalid";
+        case End:            return "End";
         case Whitespace:     return "Whitespace";
         case NewLine:        return "NewLine";
         case Tab:            return "Tab";
@@ -67,15 +72,22 @@ namespace
         case Keyword:        return "Keyword";
         case Identifier:     return "Identifier";
         case IntLiteral:     return "IntLiteral";
+        case FloatLiteral:   return "FloatLiteral";
         case StringLiteral:  return "StringLiteral";
+        case CharLiteral:    return "CharLiteral";
         case Preprocessor:   return "Preprocessor";
         case Semicolon:      return "Semicolon";
         case Colon:          return "Colon";
         case Comma:          return "Comma";
+        case Period:         return "Period";
         case OpenParen:      return "OpenParen";
         case CloseParen:     return "CloseParen";
         case OpenCurly:      return "OpenCurly";
         case CloseCurly:     return "CloseCurly";
+        case OpenBracket:    return "OpenBracket";
+        case CloseBracket:   return "CloseBracket";
+        case OpenAngle:      return "OpenAngle";
+        case CloseAngle:     return "CloseAngle";
         }
 
         assert(false && "Invalid TokenKind");
@@ -301,13 +313,28 @@ void Lexer::ConsumeToken()
     else if (c == '#')
     {
         token.Kind = TokenKind::Preprocessor;
-        const size_t begin = Cursor;
+        const size_t lineIdxBegin = LineIdx;
+        const size_t lineBegin = StartOfLine;
+        const size_t tokenBegin = Cursor;
         while (QCursorValid() && PeekCursor() != '\n')
         {
-            IterateChar();
+            if (PeekCursor() == '\\') // Handle line continuation
+            {
+                IterateChar(); // Consume backslash
+                if (QCursorValid() && PeekCursor() == '\n')
+                {
+                    ++LineIdx;
+                    StartOfLine = Cursor + 1;
+                    IterateChar(); // Consume newline
+                }
+            }
+            else
+            {
+                IterateChar();
+            }
         }
-        token.Value = Content.substr(begin, Cursor - begin);
-        token.Loc = { LineIdx, begin - StartOfLine };
+        token.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
+        token.Loc = { lineIdxBegin, tokenBegin - lineBegin };
     }
     else if (c == '"')
     {
@@ -330,6 +357,34 @@ void Lexer::ConsumeToken()
             }
         }
         if (QCursorValid())
+        {
+            IterateChar(); // Consume closing quote
+        }
+        token.Value = Content.substr(begin, Cursor - begin);
+        token.Loc = { LineIdx, begin - StartOfLine };
+    }
+    else if (c == '\'')
+    {
+        token.Kind = TokenKind::CharLiteral;
+        const size_t begin = Cursor;
+        IterateChar(); // Consume opening quote
+        if (QCursorValid())
+        {
+            if (PeekCursor() == '\\') // Handle escape sequences
+            {
+                IterateChar(); // Consume backslash
+                if (QCursorValid())
+                {
+                    IterateChar(); // Consume escaped character
+                }
+            }
+            else
+            {
+                IterateChar(); // Consume character
+            }
+        }
+
+        if (QCursorValid() && PeekCursor() == '\'')
         {
             IterateChar(); // Consume closing quote
         }

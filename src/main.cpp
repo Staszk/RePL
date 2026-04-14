@@ -5,6 +5,14 @@
 #include <sstream>
 
 // Testing
+#define TEST_LEXER "test" \
+    "\n" \
+    "int main() {\n" \
+    "    // This is a line comment\n" \
+    "    /* This is a block comment */\n" \
+    "    int x = 42;\n" \
+    "    string s = \"Hello, World!\";\n" \
+    "}\n"
 
 /**
  * @brief Program entry point for the RePL interpreter.
