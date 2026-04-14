@@ -33,7 +33,7 @@ private:
     void TrimWhitespace();
     void ConsumeToken();
 
-    TokenKind PeekSingleCharTokenKind();
+    std::pair<TokenKind, size_t> GatherTokenLiteral();
 
     bool IsNumericLiteralStart();
     bool IsIdentifierStart();
@@ -43,7 +43,7 @@ private:
     bool IsLineCommentStart();
     bool IsBlockCommentStart();
 
-    void ConsumeSingleCharToken(Token& arToken, TokenKind aKind);
+    void ConsumeTokenLiteral(Token& arToken, TokenKind aKind, size_t aLength);
     void ConsumeNumericLiteralToken(Token& arToken);
     void ConsumeIdentifierToken(Token& arToken);
     void ConsumePreprocessorToken(Token& arToken);

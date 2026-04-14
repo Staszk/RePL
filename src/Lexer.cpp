@@ -1,6 +1,5 @@
 #include "Lexer.hpp"
 #include <algorithm>
-#include <array>
 #include <format>
 #include <iostream>
 #include <assert.h>
@@ -45,37 +44,45 @@ namespace
         return std::find(Keywords.begin(), Keywords.end(), value) != Keywords.end();
     }
 
-    /**
-     * @brief Build the fixed lookup table for single-character literal token kinds.
-     *
-     * @return The initialized character token lookup table.
-     */
-    constexpr std::array<TokenKind, 256> MakeCharLiterals()
+    constexpr std::array<TokenLiteralInfo, 256> MakeTokenLiteralInfo()
     {
-        std::array<TokenKind, 256> literals;
-        literals.fill(TokenKind::Invalid);
+        std::array<TokenLiteralInfo, 256> info;
+        info.fill({ TokenKind::Invalid, {}, 0 });
 
-        literals[ToUChar('\0')] = TokenKind::End;
-        literals[ToUChar(' ')]  = TokenKind::Whitespace;
-        literals[ToUChar('\n')] = TokenKind::NewLine;
-        literals[ToUChar('\t')] = TokenKind::Tab;
-        literals[ToUChar(';')]  = TokenKind::Semicolon;
-        literals[ToUChar(':')]  = TokenKind::Colon;
-        literals[ToUChar(',')]  = TokenKind::Comma;
-        literals[ToUChar('.')]  = TokenKind::Period;
-        literals[ToUChar('(')]  = TokenKind::OpenParen;
-        literals[ToUChar(')')]  = TokenKind::CloseParen;
-        literals[ToUChar('{')]  = TokenKind::OpenCurly;
-        literals[ToUChar('}')]  = TokenKind::CloseCurly;
-        literals[ToUChar('[')]  = TokenKind::OpenBracket;
-        literals[ToUChar(']')]  = TokenKind::CloseBracket;
-        literals[ToUChar('<')]  = TokenKind::OpenAngle;
-        literals[ToUChar('>')]  = TokenKind::CloseAngle;
+        info[ToUChar('\0')] = {TokenKind::End, {}, 0};
+        info[ToUChar(' ')]  = {TokenKind::Whitespace, {}, 0};
+        info[ToUChar('\n')] = {TokenKind::NewLine, {}, 0};
+        info[ToUChar('\t')] = {TokenKind::Tab, {}, 0};
+        info[ToUChar(';')]  = {TokenKind::Semicolon, {}, 0};
+        info[ToUChar(':')]  = {TokenKind::Colon, {}, 0};
+        info[ToUChar(',')]  = {TokenKind::Comma, {}, 0};
+        info[ToUChar('.')]  = {TokenKind::Period, {}, 0};
+        info[ToUChar('(')]  = {TokenKind::OpenParen, {}, 0};
+        info[ToUChar(')')]  = {TokenKind::CloseParen, {}, 0};
+        info[ToUChar('{')]  = {TokenKind::OpenCurly, {}, 0};
+        info[ToUChar('}')]  = {TokenKind::CloseCurly, {}, 0};
+        info[ToUChar('[')]  = {TokenKind::OpenBracket, {}, 0};
+        info[ToUChar(']')]  = {TokenKind::CloseBracket, {}, 0};
+        info[ToUChar('^')]  = {TokenKind::Caret, {}, 0};
+        info[ToUChar('~')]  = {TokenKind::Tilde, {}, 0};
+        info[ToUChar('?')]  = {TokenKind::Question, {}, 0};
+        
+        info[ToUChar('+')]  = { TokenKind::Plus, {{ {"++", TokenKind::Increment}, {"+=", TokenKind::PlusEqual} }}, 2 };
+        info[ToUChar('-')]  = { TokenKind::Minus, {{ {"--", TokenKind::Decrement}, {"-=", TokenKind::MinusEqual} }}, 2 };
+        info[ToUChar('*')]  = { TokenKind::Asterisk, {{ {"*=" , TokenKind::AsteriskEqual} }}, 1 };
+        info[ToUChar('/')]  = { TokenKind::Slash, {{ {"/=" , TokenKind::SlashEqual} }}, 1 };
+        info[ToUChar('%')]  = { TokenKind::Percent, {{ {"%=" , TokenKind::PercentEqual} }}, 1 };
+        info[ToUChar('&')]  = { TokenKind::Ampersand, {{ {"&&", TokenKind::LogicalAnd} }}, 1 };
+        info[ToUChar('|')]  = { TokenKind::Pipe, {{ {"||", TokenKind::LogicalOr} }}, 1 };
+        info[ToUChar('=')]  = { TokenKind::Equal, {{ {"==", TokenKind::EqualsEquals} }}, 1 };
+        info[ToUChar('!')]  = { TokenKind::Bang, {{ {"!=" , TokenKind::NotEquals} }}, 1 };
+        info[ToUChar('<')]  = { TokenKind::OpenAngle, {{ {"<=" , TokenKind::LessEqual} }}, 1 };
+        info[ToUChar('>')]  = { TokenKind::CloseAngle, {{ {">=" , TokenKind::GreaterEqual} }}, 1 };
 
-        return literals;
+        return info;
     }
 
-    constexpr auto CharLiterals = MakeCharLiterals();
+    constexpr auto TokenLiteralInfoTable = MakeTokenLiteralInfo();
 
     /**
      * @brief Convert a TokenKind enum value into a human-readable text label.
@@ -88,25 +95,69 @@ namespace
         switch (aKind)
         {
         using enum TokenKind;
+        // Special Cases
         case Invalid:           return "Invalid";
         case End:               return "End";
+
+        // Whitespaces
         case Whitespace:        return "Whitespace";
         case NewLine:           return "NewLine";
         case Tab:               return "Tab";
+
+        // Comments
         case LineComment:       return "LineComment";
         case BlockComment:      return "BlockComment";
+
+        // Keywords and Identifiers
         case Keyword:           return "Keyword";
         case Identifier:        return "Identifier";
+
+        // Literals
         case IntLiteral:        return "IntLiteral";
         case FloatLiteral:      return "FloatLiteral";
         case HalfFloatLiteral:  return "HalfFloatLiteral";
         case StringLiteral:     return "StringLiteral";
         case CharLiteral:       return "CharLiteral";
+
+        // Preprocessor
         case Preprocessor:      return "Preprocessor";
+
+        // Multi-Character Literals
+        // Operators
+        case PlusEqual:         return "PlusEqual";
+        case MinusEqual:        return "MinusEqual";
+        case Increment:         return "Increment";
+        case Decrement:         return "Decrement";
+        case AsteriskEqual:     return "AsteriskEqual";
+        case SlashEqual:        return "SlashEqual";
+        case PercentEqual:      return "PercentEqual";
+        case EqualsEquals:      return "EqualsEquals";
+        case NotEquals:         return "NotEquals";
+        case LogicalAnd:        return "LogicalAnd";
+        case LogicalOr:         return "LogicalOr";
+        case LessEqual:         return "LessEqual";
+        case GreaterEqual:      return "GreaterEqual";
+
+        // Single Character Literals
+        // Operators
+        case Plus:              return "Plus";
+        case Minus:             return "Minus";
+        case Asterisk:          return "Asterisk";
+        case Slash:             return "Slash";
+        case Percent:           return "Percent";
+        case Ampersand:         return "Ampersand";
+        case Pipe:              return "Pipe";
+        case Caret:             return "Caret";
+        case Tilde:             return "Tilde";
+        case Bang:              return "Bang";
+        case Equal:             return "Equal";
+        case Question:          return "Question";
+        /// Delimiters
         case Semicolon:         return "Semicolon";
         case Colon:             return "Colon";
         case Comma:             return "Comma";
         case Period:            return "Period";
+        /// Scopes and Grouping
         case OpenParen:         return "OpenParen";
         case CloseParen:        return "CloseParen";
         case OpenCurly:         return "OpenCurly";
@@ -287,17 +338,13 @@ void Lexer::ConsumeToken()
 
     Token token{};
 
-    if (const TokenKind singleCharKind = PeekSingleCharTokenKind(); singleCharKind != TokenKind::Invalid)
+    if (IsLineCommentStart())
     {
-        ConsumeSingleCharToken(token, singleCharKind);
+        ConsumeLineCommentToken(token);
     }
-    else if (IsNumericLiteralStart())
+    else if (IsBlockCommentStart())
     {
-        ConsumeNumericLiteralToken(token);
-    }
-    else if (IsIdentifierStart())
-    {
-        ConsumeIdentifierToken(token);
+        ConsumeBlockCommentToken(token);
     }
     else if (IsPreprocessorDirectiveStart())
     {
@@ -311,30 +358,60 @@ void Lexer::ConsumeToken()
     {
         ConsumeCharLiteralToken(token);
     }
-    else if (IsLineCommentStart())
+    else if (IsNumericLiteralStart())
     {
-        ConsumeLineCommentToken(token);
+        ConsumeNumericLiteralToken(token);
     }
-    else if (IsBlockCommentStart())
+    else if (IsIdentifierStart())
     {
-        ConsumeBlockCommentToken(token);
+        ConsumeIdentifierToken(token);
     }
     else
     {
-        ConsumeUnknownToken(token);
+        const auto [literalKind, tokenLength] = GatherTokenLiteral();
+
+        if (literalKind != TokenKind::Invalid)
+        {
+            ConsumeTokenLiteral(token, literalKind, tokenLength);
+        }
+        else
+        {
+            ConsumeUnknownToken(token);
+        }
     }
 
     PushToken(std::move(token));
 }
 
 /**
- * @brief Check whether the current character represents a single-character token.
+ * @brief Check whether the current character represents a token literal and return its
+ * kind, also providing the length of the literal if it's a compound token.
  *
- * @return The token kind corresponding to the current character, or TokenKind::Invalid.
+ * @return A pair of the token kind and literal length (1 for single-character tokens, >1 for compound tokens).
  */
-TokenKind Lexer::PeekSingleCharTokenKind()
+std::pair<TokenKind, size_t> Lexer::GatherTokenLiteral()
 {
-    return CharLiterals[ToUChar(PeekCursor())];
+    const size_t cursor = Cursor;
+    const char current = PeekCursor();
+    const TokenLiteralInfo& info = TokenLiteralInfoTable[ToUChar(current)];
+
+    for (size_t index = 0; index < info.CompoundCount; ++index)
+    {
+        const auto& option = info.CompoundOptions[index];
+        const size_t optionLength = option.Text.size();
+
+        if (optionLength == 0 || cursor + optionLength > ContentSize)
+        {
+            continue;
+        }
+
+        if (Content.substr(cursor, optionLength) == option.Text)
+        {
+            return { option.Kind, optionLength };
+        }
+    }
+
+    return { info.Single, 1 };
 }
 
 /**
@@ -413,12 +490,14 @@ bool Lexer::IsBlockCommentStart()
  * @param arToken The token to populate.
  * @param aKind The kind of token to consume.
  */
-void Lexer::ConsumeSingleCharToken(Token& arToken, TokenKind aKind)
+void Lexer::ConsumeTokenLiteral(Token& arToken, TokenKind aKind, size_t aLength)
 {
+    const size_t length = aLength > 0 ? aLength : 1;
+
     arToken.Kind = aKind;
-    arToken.Value = Content.substr(Cursor, 1);
+    arToken.Value = Content.substr(Cursor, length);
     arToken.Loc = { LineIdx, Cursor - StartOfLine };
-    Advance();
+    AdvanceBy(length);
 }
 
 /**
