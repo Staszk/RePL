@@ -1,30 +1,49 @@
 #include "Lexer.hpp"
-
+#include <iostream>
 #include <fstream>
 #include <sstream>
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2)
+    const bool fileMode = argc > 1;
+
+    if (fileMode)
     {
-        return 1;
-    }
+        std::string content{};
+        std::ifstream file(argv[1]);
+        if (file.is_open())
+        {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            content = buffer.str();
+            file.close();
+        }
 
-    std::string content{};
-    std::ifstream file(argv[1]);
-    if (file.is_open())
+        Lexer lexer(content.c_str());
+        lexer.PrintContent();
+        lexer.PrintTokens();
+
+        std::puts("Done");
+    }
+    else
     {
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        content = buffer.str();
-        file.close();
+        bool shouldExit = false;
+        while (!shouldExit)
+        {
+            std::string input;
+            std::cout << "> ";
+            std::getline(std::cin, input);
+
+            if (input == "exit")
+            {
+                shouldExit = true;
+                continue;
+            }
+
+            Lexer lexer(input.c_str());
+            lexer.PrintTokens();
+        }
     }
-
-    Lexer lexer(content.c_str());
-    lexer.PrintContent();
-    lexer.PrintTokens();
-
-    std::puts("Done");
 
     return 0;
 }

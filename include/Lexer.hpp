@@ -1,32 +1,9 @@
 #ifndef REPL_LEXER_H
 #define REPL_LEXER_H
 
-#include <string>
+#include "Token.hpp"
 #include <string_view>
 #include <vector>
-
-enum class TokenKind : uint8_t
-{
-    End = 0, Invalid,
-    Whitespace, NewLine, Tab,
-    Keyword, Identifier,
-    IntLiteral, StringLiteral, 
-    Preprocessor,
-    Semicolon, Colon, Comma, OpenParen, CloseParen, OpenCurly, CloseCurly,
-};
-
-struct Location
-{
-    size_t Line;
-    size_t Col;
-};
-
-struct Token
-{
-    TokenKind Kind;
-    std::string_view Value;
-    Location Loc;
-};
 
 class Lexer final
 {
@@ -44,20 +21,23 @@ public:
     void PrintTokens();
 
 private:
-    char PeekCursor() const { return Content.at(Cursor); }
-    bool QCursorValid() const { return Cursor < Content.size(); }
-    void TrimWhitespace();
-    void Tokenize();
-    void ConstructNext();
+    void ConsumeToken();
     void IterateChar();
     void IterateChars(size_t aCount);
+    const char& PeekCursor() const { return Content.at(Cursor); }
     void PushToken(Token&& arrToken) { Tokens.emplace_back(std::move(arrToken)); }
+    bool QCursorValid() const { return Cursor < Content.size(); }
+    void Tokenize();
+    void TrimWhitespace();
 
-    std::string_view Content{ "" };
-    std::vector<Token> Tokens{ };
-    size_t Cursor{ };
-    size_t LineIdx{ };
-    size_t StartOfLine{ };
+    // Input
+    std::string_view Content{""};
+    // State
+    size_t Cursor{};
+    size_t LineIdx{};
+    size_t StartOfLine{};
+    // Output
+    std::vector<Token> Tokens{};
 };
 
 #endif // REPL_LEXER_H

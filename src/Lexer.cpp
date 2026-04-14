@@ -1,41 +1,55 @@
 #include "Lexer.hpp"
 #include <array>
-#include <cctype>
 #include <format>
 #include <iostream>
+#include <assert.h>
 
 
 namespace
 {
 	constexpr bool TrimWhitespaceEnabled = true;
 
+    /// <summary>
+    /// Convert a char to unsigned char for safe use with character classification APIs.
+    /// </summary>
+    /// <param name="c">The character to convert.</param>
+    /// <returns>The converted unsigned char value.</returns>
     constexpr unsigned char ToUChar(char c) noexcept
     {
         return static_cast<unsigned char>(c);
     }
 
+    /// <summary>
+    /// Build the fixed lookup table for single-character literal token kinds.
+    /// </summary>
+    /// <returns>The initialized character token lookup table.</returns>
     constexpr std::array<TokenKind, 256> MakeCharLiterals()
     {
         std::array<TokenKind, 256> literals;
         literals.fill(TokenKind::Invalid);
 
         literals[ToUChar('\0')] = TokenKind::End;
-        literals[ToUChar(' ')] = TokenKind::Whitespace;
+        literals[ToUChar(' ')]  = TokenKind::Whitespace;
         literals[ToUChar('\n')] = TokenKind::NewLine;
         literals[ToUChar('\t')] = TokenKind::Tab;
-        literals[ToUChar(';')] = TokenKind::Semicolon;
-        literals[ToUChar(':')] = TokenKind::Colon;
-        literals[ToUChar(',')] = TokenKind::Comma;
-        literals[ToUChar('(')] = TokenKind::OpenParen;
-        literals[ToUChar(')')] = TokenKind::CloseParen;
-        literals[ToUChar('{')] = TokenKind::OpenCurly;
-        literals[ToUChar('}')] = TokenKind::CloseCurly;
+        literals[ToUChar(';')]  = TokenKind::Semicolon;
+        literals[ToUChar(':')]  = TokenKind::Colon;
+        literals[ToUChar(',')]  = TokenKind::Comma;
+        literals[ToUChar('(')]  = TokenKind::OpenParen;
+        literals[ToUChar(')')]  = TokenKind::CloseParen;
+        literals[ToUChar('{')]  = TokenKind::OpenCurly;
+        literals[ToUChar('}')]  = TokenKind::CloseCurly;
 
         return literals;
     }
 
     constexpr auto CharLiterals = MakeCharLiterals();
 
+    /// <summary>
+    /// Convert a TokenKind enum value into a human-readable text label.
+    /// </summary>
+    /// <param name="aKind">The token kind to convert.</param>
+    /// <returns>The token kind text label.</returns>
     std::string_view TokenKindToText(TokenKind aKind)
     {
         switch (aKind)
@@ -60,11 +74,16 @@ namespace
         case CloseCurly:     return "CloseCurly";
 		}
 
-		_STL_UNREACHABLE; 
+		assert(false && "Invalid TokenKind");
 		return "";
     }
 
-    std::string_view TokenValueToText(const std::string_view& arView)
+    /// <summary>
+    /// Format a token value for display, escaping whitespace characters.
+    /// </summary>
+    /// <param name="arView">The token value to format.</param>
+    /// <returns>The escaped display string view.</returns>
+    std::string_view TokenValueToText(const std::string_view arView)
     {
         std::string_view v{ arView };
 
@@ -87,28 +106,49 @@ namespace
         return v;
     }
 
+    /// <summary>
+    /// Serialize a Token to a text representation for debugging output.
+    /// </summary>
+    /// <param name="aToken">The token to serialize.</param>
+    /// <returns>The formatted token string.</returns>
     std::string TokenToText(const Token& aToken)
     {
         return std::format("{} : {} : {{{}, {}}}", TokenKindToText(aToken.Kind), 
 			TokenValueToText(aToken.Value), aToken.Loc.Line, aToken.Loc.Col);
     }
 
+    /// <summary>
+    /// Determine whether a character may start an identifier.
+    /// </summary>
+    /// <param name="c">The character to test.</param>
+    /// <returns>True if the character may start an identifier.</returns>
 	bool StartsIdentifier(unsigned char c)
 	{
 		return isalpha(c) || c == '_';
 	}
 
+    /// <summary>
+    /// Determine whether a character may continue an identifier.
+    /// </summary>
+    /// <param name="c">The character to test.</param>
+    /// <returns>True if the character may continue an identifier.</returns>
 	bool ContinuesIdentifier(unsigned char c)
 	{
 		return isalnum(c) || c == '_';
 	}
 }
 
+/// <summary>
+/// Print the lexer input content to stdout.
+/// </summary>
 void Lexer::PrintContent()
 {
     std::cout << Content << '\n';
 }
 
+/// <summary>
+/// Print all generated tokens to stdout.
+/// </summary>
 void Lexer::PrintTokens()
 {
     for (const auto& token : Tokens)
@@ -117,6 +157,9 @@ void Lexer::PrintTokens()
     }
 }
 
+/// <summary>
+/// Consume whitespace characters and update line/column tracking.
+/// </summary>
 void Lexer::TrimWhitespace()
 {
     while (QCursorValid() && std::isspace(ToUChar(Content[Cursor])))
@@ -131,15 +174,21 @@ void Lexer::TrimWhitespace()
     }
 }
 
+/// <summary>
+/// Tokenize the entire input buffer into the token list.
+/// </summary>
 void Lexer::Tokenize()
 {
     while (QCursorValid())
     {
-        ConstructNext();
+        ConsumeToken();
     }
 }
 
-void Lexer::ConstructNext()
+/// <summary>
+/// Consume the next token from the input and add it to the token list.
+/// </summary>
+void Lexer::ConsumeToken()
 {
     if constexpr (TrimWhitespaceEnabled)
     {
@@ -215,11 +264,18 @@ void Lexer::ConstructNext()
     PushToken(std::move(token));
 }
 
+/// <summary>
+/// Advance the read cursor by one character.
+/// </summary>
 inline void Lexer::IterateChar()
 {
 	++Cursor;
 }
 
+/// <summary>
+/// Advance the read cursor by the specified number of characters.
+/// </summary>
+/// <param name="aCount">The number of characters to advance.</param>
 inline void Lexer::IterateChars(size_t aCount)
 {
 	Cursor += aCount;
