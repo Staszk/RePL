@@ -13,6 +13,8 @@ enum class TokenKind : uint8_t
     Invalid = 0, End,
     // Whitespaces
     Whitespace, NewLine, Tab,
+    // Comments
+    LineComment, BlockComment,
     // Keywords and Identifiers
     Keyword, Identifier,
     // Literals
@@ -28,8 +30,8 @@ enum class TokenKind : uint8_t
  */
 struct Location
 {
-    size_t Col;
     size_t Line;
+    size_t Col;
 };
 
 /**

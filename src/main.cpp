@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 
+// Testing
+
 /**
  * @brief Program entry point for the RePL interpreter.
  *
@@ -29,7 +31,7 @@ int main(int argc, char* argv[])
 
         Lexer lexer(content.c_str());
         //lexer.PrintContent();
-        //lexer.PrintTokens();
+        lexer.PrintTokens();
         Parser parser(lexer.QTokens());
     }
     else

@@ -62,6 +62,8 @@ namespace
         case Whitespace:     return "Whitespace";
         case NewLine:        return "NewLine";
         case Tab:            return "Tab";
+        case LineComment:    return "LineComment";
+        case BlockComment:   return "BlockComment";
         case Keyword:        return "Keyword";
         case Identifier:     return "Identifier";
         case IntLiteral:     return "IntLiteral";
@@ -118,7 +120,7 @@ namespace
     std::string TokenToText(const Token& aToken)
     {
         return std::format("{} : {} : {{{}, {}}}", TokenKindToText(aToken.Kind),
-            TokenValueToText(aToken.Value), aToken.Loc.Line, aToken.Loc.Col);
+            TokenValueToText(aToken.Value), aToken.Loc.Line + 1, aToken.Loc.Col + 1);
     }
 
     /**
@@ -141,6 +143,40 @@ namespace
     bool ContinuesIdentifier(unsigned char c)
     {
         return isalnum(c) || c == '_';
+    }
+
+
+    /**
+     * @brief Check if a pair of characters starts a line comment.
+     * @param c1 The first character.
+     * @param c2 The second character.
+     * @return True if the characters start a line comment.
+     */
+    bool StartsLineComment(unsigned char c1, unsigned char c2)
+    {
+        return c1 == '/' && c2 == '/';
+    }
+
+    /**
+     * @brief Check if a pair of characters starts a block comment.
+     * @param c1 The first character.
+     * @param c2 The second character.
+     * @return True if the characters start a block comment.
+     */
+    bool StartsBlockComment(unsigned char c1, unsigned char c2)
+    {
+        return c1 == '/' && c2 == '*';
+    }
+
+    /**
+     * @brief Check if a pair of characters ends a block comment.
+     * @param c1 The first character.
+     * @param c2 The second character.
+     * @return True if the characters end a block comment.
+     */
+    bool EndsBlockComment(unsigned char c1, unsigned char c2)
+    {
+        return c1 == '*' && c2 == '/';
     }
 }
 
@@ -242,6 +278,7 @@ void Lexer::ConsumeToken()
     {
         token.Kind = TokenKind::IntLiteral;
         const size_t begin = Cursor;
+        IterateChar(); // Consume first digit
         while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
         {
             IterateChar();
@@ -253,6 +290,7 @@ void Lexer::ConsumeToken()
     {
         token.Kind = TokenKind::Identifier;
         const size_t begin = Cursor;
+        IterateChar(); // Consume first character
         while (QCursorValid() && ContinuesIdentifier(ToUChar(PeekCursor())))
         {
             IterateChar();
@@ -270,6 +308,64 @@ void Lexer::ConsumeToken()
         }
         token.Value = Content.substr(begin, Cursor - begin);
         token.Loc = { LineIdx, begin - StartOfLine };
+    }
+    else if (c == '"')
+    {
+        token.Kind = TokenKind::StringLiteral;
+        const size_t begin = Cursor;
+        IterateChar(); // Consume opening quote
+        while (QCursorValid() && PeekCursor() != '"')
+        {
+            if (PeekCursor() == '\\') // Handle escape sequences
+            {
+                IterateChar(); // Consume backslash
+                if (QCursorValid())
+                {
+                    IterateChar(); // Consume escaped character
+                }
+            }
+            else
+            {
+                IterateChar();
+            }
+        }
+        if (QCursorValid())
+        {
+            IterateChar(); // Consume closing quote
+        }
+        token.Value = Content.substr(begin, Cursor - begin);
+        token.Loc = { LineIdx, begin - StartOfLine };
+    }
+    else if (QCursorValid() && StartsLineComment(ToUChar(c), ToUChar(PeekAt(1))))
+    {
+        token.Kind = TokenKind::LineComment;
+        const size_t begin = Cursor;
+        while (QCursorValid() && PeekCursor() != '\n')
+        {
+            IterateChar();
+        }
+        token.Value = Content.substr(begin, Cursor - begin);
+        token.Loc = { LineIdx, begin - StartOfLine };
+    }
+    else if (QCursorValid() && StartsBlockComment(ToUChar(c), ToUChar(PeekAt(1))))
+    {
+        token.Kind = TokenKind::BlockComment;
+        const size_t lineIdxBegin = LineIdx;
+        const size_t lineBegin = StartOfLine;
+        const size_t tokenBegin = Cursor;
+        IterateChars(2); // Consume opening '/*'
+        while (QCursorValid() && !EndsBlockComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1))))
+        {
+            if (PeekCursor() == '\n')
+            {
+                ++LineIdx;
+                StartOfLine = Cursor + 1;
+            }
+            IterateChar();
+        }
+        IterateChars(2); // Consume closing '*/'
+        token.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
+        token.Loc = { lineIdxBegin, tokenBegin - lineBegin };
     }
     else
     {
@@ -297,4 +393,19 @@ inline void Lexer::IterateChar()
 inline void Lexer::IterateChars(size_t aCount)
 {
     Cursor += aCount;
+}
+
+/**
+ * @brief Peek at a character at a specific offset from the current cursor position.
+ *
+ * @param offset The offset from the current cursor position.
+ * @return A reference to the character at the specified offset.
+ */
+const char &Lexer::PeekAt(size_t offset) const
+{
+    if (Cursor + offset < Content.size())
+    {
+        return Content.at(Cursor + offset);
+    }
+    return Content.back();
 }

@@ -31,6 +31,7 @@ private:
     void ConsumeToken();
     void IterateChar();
     void IterateChars(size_t aCount);
+    const char& PeekAt(size_t offset) const;
     void Tokenize();
     void TrimWhitespace();
 
@@ -40,6 +41,7 @@ private:
      * @return A reference to the current character.
      */
     const char& PeekCursor() const { return Content.at(Cursor); }
+
 
     /**
      * @brief Add a token to the output token list.
