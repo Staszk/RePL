@@ -306,6 +306,8 @@ void Lexer::ConsumeToken()
     {
         ConsumeUnknownToken(token);
     }
+
+    PushToken(std::move(token));
 }
 
 /**
