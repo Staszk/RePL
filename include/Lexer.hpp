@@ -28,20 +28,40 @@ public:
     const std::vector<Token>& QTokens() const { return Tokens; }
 
 private:
+    void Tokenize();
+    void TrimWhitespace();
     void ConsumeToken();
+
+    TokenKind PeekSingleCharTokenKind();
+
+    bool IsNumericLiteralStart();
+    bool IsIdentifierStart();
+    bool IsPreprocessorDirectiveStart();
+    bool IsStringLiteralStart();
+    bool IsCharLiteralStart();
+    bool IsLineCommentStart();
+    bool IsBlockCommentStart();
+
+    void ConsumeSingleCharToken(Token& arToken, TokenKind aKind);
+    void ConsumeNumericLiteralToken(Token& arToken);
+    void ConsumeIdentifierToken(Token& arToken);
+    void ConsumePreprocessorToken(Token& arToken);
+    void ConsumeStringLiteralToken(Token& arToken);
+    void ConsumeCharLiteralToken(Token& arToken);
+    void ConsumeLineCommentToken(Token& arToken);
+    void ConsumeBlockCommentToken(Token& arToken);
+    void ConsumeUnknownToken(Token& arToken);
+
     void IterateChar();
     void IterateChars(size_t aCount);
     const char& PeekAt(size_t offset) const;
-    void Tokenize();
-    void TrimWhitespace();
 
     /**
      * @brief Peek at the current character under the cursor.
      *
      * @return A reference to the current character.
      */
-    const char& PeekCursor() const { return Content.at(Cursor); }
-
+    const char& PeekCursor() const { return PeekAt(0); }
 
     /**
      * @brief Add a token to the output token list.
@@ -55,14 +75,15 @@ private:
      *
      * @return True if the cursor is valid; otherwise false.
      */
-    bool QCursorValid() const { return Cursor < Content.size(); }
+    bool QCursorValid() const { return Cursor < ContentSize; }
 
     // Input
-    std::string_view Content{""};
+    const std::string_view Content{""};
     // State
-    size_t Cursor{};
-    size_t LineIdx{};
-    size_t StartOfLine{};
+	const size_t ContentSize{0};
+    size_t Cursor{0};
+    size_t LineIdx{0};
+    size_t StartOfLine{0};
     // Output
     std::vector<Token> Tokens{};
 };

@@ -161,6 +161,7 @@ namespace
 
     /**
      * @brief Check if a pair of characters starts a line comment.
+     * 
      * @param c1 The first character.
      * @param c2 The second character.
      * @return True if the characters start a line comment.
@@ -172,6 +173,7 @@ namespace
 
     /**
      * @brief Check if a pair of characters starts a block comment.
+     * 
      * @param c1 The first character.
      * @param c2 The second character.
      * @return True if the characters start a block comment.
@@ -183,6 +185,7 @@ namespace
 
     /**
      * @brief Check if a pair of characters ends a block comment.
+     * 
      * @param c1 The first character.
      * @param c2 The second character.
      * @return True if the characters end a block comment.
@@ -199,7 +202,7 @@ namespace
  * @param apText The input text to tokenize.
  */
 Lexer::Lexer(const char *apText)
-    : Content(apText), Cursor(0), LineIdx(0), StartOfLine(0)
+    : Content(apText), ContentSize(Content.size())
 {
     Tokenize();
 }
@@ -224,23 +227,6 @@ void Lexer::PrintTokens()
 }
 
 /**
- * @brief Consume whitespace characters and update line/column tracking.
- */
-void Lexer::TrimWhitespace()
-{
-    while (QCursorValid() && std::isspace(ToUChar(Content[Cursor])))
-    {
-        if (Content[Cursor] == '\n')
-        {
-            ++LineIdx;
-            StartOfLine = Cursor + 1;
-        }
-
-        IterateChar();
-    }
-}
-
-/**
  * @brief Tokenize the entire input buffer into the token list.
  */
 void Lexer::Tokenize()
@@ -248,6 +234,23 @@ void Lexer::Tokenize()
     while (QCursorValid())
     {
         ConsumeToken();
+    }
+}
+
+/**
+ * @brief Consume whitespace characters and update line/column tracking.
+ */
+void Lexer::TrimWhitespace()
+{
+    while (QCursorValid() && std::isspace(ToUChar(PeekCursor())))
+    {
+        if (PeekCursor() == '\n')
+        {
+            ++LineIdx;
+            StartOfLine = Cursor + 1;
+        }
+
+        IterateChar();
     }
 }
 
@@ -267,191 +270,357 @@ void Lexer::ConsumeToken()
 
     Token token{};
 
-    const char c = Content[Cursor];
-    const TokenKind kind = CharLiterals[ToUChar(c)];
-
-    if (kind != TokenKind::Invalid)
+    if (const TokenKind singleCharKind = PeekSingleCharTokenKind(); singleCharKind != TokenKind::Invalid)
     {
-        token.Kind = kind;
-        token.Value = Content.substr(Cursor, 1);
-        token.Loc = { LineIdx, Cursor - StartOfLine };
+        ConsumeSingleCharToken(token, singleCharKind);
+    }
+    else if (IsNumericLiteralStart())
+    {
+        ConsumeNumericLiteralToken(token);
+    }
+    else if (IsIdentifierStart())
+    {
+        ConsumeIdentifierToken(token);
+    }
+    else if (IsPreprocessorDirectiveStart())
+    {
+        ConsumePreprocessorToken(token);
+    }
+    else if (IsStringLiteralStart())
+    {
+        ConsumeStringLiteralToken(token);
+    }
+    else if (IsCharLiteralStart())
+    {
+        ConsumeCharLiteralToken(token);
+    }
+    else if (IsLineCommentStart())
+    {
+        ConsumeLineCommentToken(token);
+    }
+    else if (IsBlockCommentStart())
+    {
+        ConsumeBlockCommentToken(token);
+    }
+    else
+    {
+        ConsumeUnknownToken(token);
+    }
+}
 
-        if constexpr (!TrimWhitespaceEnabled)
+/**
+ * @brief Check whether the current character represents a single-character token.
+ *
+ * @return The token kind corresponding to the current character, or TokenKind::Invalid.
+ */
+TokenKind Lexer::PeekSingleCharTokenKind()
+{
+    return CharLiterals[ToUChar(PeekCursor())];
+}
+
+/**
+ * @brief Check whether the current character starts an integer or float literal.
+ *
+ * @return True if the current character begins a numeric literal.
+ */
+bool Lexer::IsNumericLiteralStart()
+{
+    return std::isdigit(ToUChar(PeekCursor()));
+}
+
+/**
+ * @brief Check whether the current character starts an identifier.
+ *
+ * @return True if the current character begins an identifier.
+ */
+bool Lexer::IsIdentifierStart()
+{
+    return StartsIdentifier(ToUChar(PeekCursor()));
+}
+
+/**
+ * @brief Check whether the current character starts a preprocessor directive.
+ *
+ * @return True if the current character is '#'.
+ */
+bool Lexer::IsPreprocessorDirectiveStart()
+{
+    return PeekCursor() == '#';
+}
+
+/**
+ * @brief Check whether the current character starts a string literal.
+ *
+ * @return True if the current character is a string quote.
+ */
+bool Lexer::IsStringLiteralStart()
+{
+    return PeekCursor() == '"';
+}
+
+/**
+ * @brief Check whether the current character starts a character literal.
+ *
+ * @return True if the current character is a character quote.
+ */
+bool Lexer::IsCharLiteralStart()
+{
+    return PeekCursor() == '\'';
+}
+
+/**
+ * @brief Check whether the current characters start a line comment.
+ *
+ * @return True if the current characters are '//'.
+ */
+bool Lexer::IsLineCommentStart()
+{
+    return StartsLineComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1)));
+}
+
+/**
+ * @brief Check whether the current characters start a block comment.
+ *
+ * @return True if the current characters are '/*'.
+ */
+bool Lexer::IsBlockCommentStart()
+{
+    return StartsBlockComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1)));
+}
+
+/**
+ * @brief Consume a single-character token.
+ *
+ * @param arToken The token to populate.
+ * @param aKind The kind of token to consume.
+ */
+void Lexer::ConsumeSingleCharToken(Token& arToken, TokenKind aKind)
+{
+    arToken.Kind = aKind;
+    arToken.Value = Content.substr(Cursor, 1);
+    arToken.Loc = { LineIdx, Cursor - StartOfLine };
+
+    if constexpr (!TrimWhitespaceEnabled)
+    {
+        if (arToken.Kind == TokenKind::NewLine)
         {
-            if (token.Kind == TokenKind::NewLine)
-            {
-                ++LineIdx;
-                StartOfLine = Cursor + 1;
-            }
+            ++LineIdx;
+            StartOfLine = Cursor + 1;
         }
+    }
 
+    IterateChar();
+}
+
+/**
+ * @brief Consume an int or float literal token.
+ *
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumeNumericLiteralToken(Token& arToken)
+{
+    const size_t begin = Cursor;
+    IterateChar(); // Consume first digit
+    while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
+    {
         IterateChar();
     }
-    else if (std::isdigit(ToUChar(c)))
+
+    bool isFloat = false;
+    if (QCursorValid() && PeekCursor() == '.' && std::isdigit(ToUChar(PeekAt(1))))
     {
-        const size_t begin = Cursor;
-        IterateChar(); // Consume first digit
+        isFloat = true;
+        IterateChar(); // Consume decimal point
         while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
         {
             IterateChar();
         }
+    }
 
-        bool isFloat = false;
-        if (QCursorValid() && PeekCursor() == '.' && std::isdigit(ToUChar(PeekAt(1))))
-        {
-            isFloat = true;
-            IterateChar(); // Consume decimal point
-            while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
-            {
-                IterateChar();
-            }
-        }
-
-        if (isFloat && QCursorValid() && PeekCursor() == 'h')
-        {
-            token.Kind = TokenKind::HalfFloatLiteral;
-            IterateChar(); // Consume the half-float suffix
-        }
-        else
-        {
-            token.Kind = isFloat ? TokenKind::FloatLiteral : TokenKind::IntLiteral;
-        }
-
-        token.Value = Content.substr(begin, Cursor - begin);
-        token.Loc = { LineIdx, begin - StartOfLine };
-    }
-    else if (StartsIdentifier(ToUChar(c)))
+    if (isFloat && QCursorValid() && PeekCursor() == 'h')
     {
-        token.Kind = TokenKind::Identifier;
-        const size_t begin = Cursor;
-        IterateChar(); // Consume first character
-        while (QCursorValid() && ContinuesIdentifier(ToUChar(PeekCursor())))
-        {
-            IterateChar();
-        }
-        token.Value = Content.substr(begin, Cursor - begin);
-        token.Loc = { LineIdx, begin - StartOfLine };
-    }
-    else if (c == '#')
-    {
-        token.Kind = TokenKind::Preprocessor;
-        const size_t lineIdxBegin = LineIdx;
-        const size_t lineBegin = StartOfLine;
-        const size_t tokenBegin = Cursor;
-        while (QCursorValid() && PeekCursor() != '\n')
-        {
-            if (PeekCursor() == '\\') // Handle line continuation
-            {
-                IterateChar(); // Consume backslash
-                if (QCursorValid() && PeekCursor() == '\n')
-                {
-                    ++LineIdx;
-                    StartOfLine = Cursor + 1;
-                    IterateChar(); // Consume newline
-                }
-            }
-            else
-            {
-                IterateChar();
-            }
-        }
-        token.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
-        token.Loc = { lineIdxBegin, tokenBegin - lineBegin };
-    }
-    else if (c == '"')
-    {
-        token.Kind = TokenKind::StringLiteral;
-        const size_t begin = Cursor;
-        IterateChar(); // Consume opening quote
-        while (QCursorValid() && PeekCursor() != '"')
-        {
-            if (PeekCursor() == '\\') // Handle escape sequences
-            {
-                IterateChar(); // Consume backslash
-                if (QCursorValid())
-                {
-                    IterateChar(); // Consume escaped character
-                }
-            }
-            else
-            {
-                IterateChar();
-            }
-        }
-        if (QCursorValid())
-        {
-            IterateChar(); // Consume closing quote
-        }
-        token.Value = Content.substr(begin, Cursor - begin);
-        token.Loc = { LineIdx, begin - StartOfLine };
-    }
-    else if (c == '\'')
-    {
-        token.Kind = TokenKind::CharLiteral;
-        const size_t begin = Cursor;
-        IterateChar(); // Consume opening quote
-        if (QCursorValid())
-        {
-            if (PeekCursor() == '\\') // Handle escape sequences
-            {
-                IterateChar(); // Consume backslash
-                if (QCursorValid())
-                {
-                    IterateChar(); // Consume escaped character
-                }
-            }
-            else
-            {
-                IterateChar(); // Consume character
-            }
-        }
-
-        if (QCursorValid() && PeekCursor() == '\'')
-        {
-            IterateChar(); // Consume closing quote
-        }
-        token.Value = Content.substr(begin, Cursor - begin);
-        token.Loc = { LineIdx, begin - StartOfLine };
-    }
-    else if (QCursorValid() && StartsLineComment(ToUChar(c), ToUChar(PeekAt(1))))
-    {
-        token.Kind = TokenKind::LineComment;
-        const size_t begin = Cursor;
-        while (QCursorValid() && PeekCursor() != '\n')
-        {
-            IterateChar();
-        }
-        token.Value = Content.substr(begin, Cursor - begin);
-        token.Loc = { LineIdx, begin - StartOfLine };
-    }
-    else if (QCursorValid() && StartsBlockComment(ToUChar(c), ToUChar(PeekAt(1))))
-    {
-        token.Kind = TokenKind::BlockComment;
-        const size_t lineIdxBegin = LineIdx;
-        const size_t lineBegin = StartOfLine;
-        const size_t tokenBegin = Cursor;
-        IterateChars(2); // Consume opening '/*'
-        while (QCursorValid() && !EndsBlockComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1))))
-        {
-            if (PeekCursor() == '\n')
-            {
-                ++LineIdx;
-                StartOfLine = Cursor + 1;
-            }
-            IterateChar();
-        }
-        IterateChars(2); // Consume closing '*/'
-        token.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
-        token.Loc = { lineIdxBegin, tokenBegin - lineBegin };
+        arToken.Kind = TokenKind::HalfFloatLiteral;
+        IterateChar(); // Consume the half-float suffix
     }
     else
     {
-        token.Value = Content.substr(Cursor, 1);
-        token.Loc = { LineIdx, Cursor - StartOfLine };
-        IterateChar();
+        arToken.Kind = isFloat ? TokenKind::FloatLiteral : TokenKind::IntLiteral;
     }
 
-    PushToken(std::move(token));
+    arToken.Value = Content.substr(begin, Cursor - begin);
+    arToken.Loc = { LineIdx, begin - StartOfLine };
+}
+
+/**
+ * @brief Consume an identifier token.
+ * 
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumeIdentifierToken(Token& arToken)
+{
+    arToken.Kind = TokenKind::Identifier;
+    const size_t begin = Cursor;
+    IterateChar(); // Consume first character
+    while (QCursorValid() && ContinuesIdentifier(ToUChar(PeekCursor())))
+    {
+        IterateChar();
+    }
+    arToken.Value = Content.substr(begin, Cursor - begin);
+    arToken.Loc = { LineIdx, begin - StartOfLine };
+}
+
+/**
+ * @brief Consume a preprocessor directive token.
+ * 
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumePreprocessorToken(Token& arToken)
+{
+    arToken.Kind = TokenKind::Preprocessor;
+    const size_t lineIdxBegin = LineIdx;
+    const size_t lineBegin = StartOfLine;
+    const size_t tokenBegin = Cursor;
+    while (QCursorValid() && PeekCursor() != '\n')
+    {
+        if (PeekCursor() == '\\') // Handle line continuation
+        {
+            IterateChar(); // Consume backslash
+            if (QCursorValid() && PeekCursor() == '\n')
+            {
+                ++LineIdx;
+                StartOfLine = Cursor + 1;
+                IterateChar(); // Consume newline
+            }
+        }
+        else
+        {
+            IterateChar();
+        }
+    }
+    arToken.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
+    arToken.Loc = { lineIdxBegin, tokenBegin - lineBegin };
+}
+
+/**
+ * @brief Consume a string literal token.
+ * 
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumeStringLiteralToken(Token& arToken)
+{
+    arToken.Kind = TokenKind::StringLiteral;
+    const size_t begin = Cursor;
+    IterateChar(); // Consume opening quote
+    while (QCursorValid() && PeekCursor() != '"')
+    {
+        if (PeekCursor() == '\\') // Handle escape sequences
+        {
+            IterateChar(); // Consume backslash
+            if (QCursorValid())
+            {
+                IterateChar(); // Consume escaped character
+            }
+        }
+        else
+        {
+            IterateChar();
+        }
+    }
+    if (QCursorValid())
+    {
+        IterateChar(); // Consume closing quote
+    }
+    arToken.Value = Content.substr(begin, Cursor - begin);
+    arToken.Loc = { LineIdx, begin - StartOfLine };
+}
+
+/**
+ * @brief Consume a character literal token.
+ * 
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumeCharLiteralToken(Token& arToken)
+{
+    arToken.Kind = TokenKind::CharLiteral;
+    const size_t begin = Cursor;
+    IterateChar(); // Consume opening quote
+    if (QCursorValid())
+    {
+        if (PeekCursor() == '\\') // Handle escape sequences
+        {
+            IterateChar(); // Consume backslash
+            if (QCursorValid())
+            {
+                IterateChar(); // Consume escaped character
+            }
+        }
+        else
+        {
+            IterateChar(); // Consume character
+        }
+    }
+
+    if (QCursorValid() && PeekCursor() == '\'')
+    {
+        IterateChar(); // Consume closing quote
+    }
+    arToken.Value = Content.substr(begin, Cursor - begin);
+    arToken.Loc = { LineIdx, begin - StartOfLine };
+}
+
+/**
+ * @brief Consume a line comment token.
+ * 
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumeLineCommentToken(Token& arToken)
+{
+    arToken.Kind = TokenKind::LineComment;
+    const size_t begin = Cursor;
+    while (QCursorValid() && PeekCursor() != '\n')
+    {
+        IterateChar();
+    }
+    arToken.Value = Content.substr(begin, Cursor - begin);
+    arToken.Loc = { LineIdx, begin - StartOfLine };
+}
+
+/**
+ * @brief Consume a block comment token.
+ * 
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumeBlockCommentToken(Token& arToken)
+{
+    arToken.Kind = TokenKind::BlockComment;
+    const size_t lineIdxBegin = LineIdx;
+    const size_t lineBegin = StartOfLine;
+    const size_t tokenBegin = Cursor;
+    IterateChars(2); // Consume opening '/*'
+    while (QCursorValid() && !EndsBlockComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1))))
+    {
+        if (PeekCursor() == '\n')
+        {
+            ++LineIdx;
+            StartOfLine = Cursor + 1;
+        }
+        IterateChar();
+    }
+    IterateChars(2); // Consume closing '*/'
+    arToken.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
+    arToken.Loc = { lineIdxBegin, tokenBegin - lineBegin };
+}
+
+/**
+ * @brief Consume an unknown or unhandled token type.
+ *
+ * @param arToken The token to populate.
+ */
+void Lexer::ConsumeUnknownToken(Token& arToken)
+{
+    arToken.Value = Content.substr(Cursor, 1);
+    arToken.Loc = { LineIdx, Cursor - StartOfLine };
+    IterateChar();
 }
 
 /**
@@ -480,7 +649,7 @@ inline void Lexer::IterateChars(size_t aCount)
  */
 const char &Lexer::PeekAt(size_t offset) const
 {
-    if (Cursor + offset < Content.size())
+    if (Cursor + offset < ContentSize)
     {
         return Content.at(Cursor + offset);
     }
