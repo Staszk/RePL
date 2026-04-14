@@ -4,25 +4,26 @@
 #include <iostream>
 #include <assert.h>
 
-
 namespace
 {
-	constexpr bool TrimWhitespaceEnabled = true;
+    constexpr bool TrimWhitespaceEnabled = true;
 
-    /// <summary>
-    /// Convert a char to unsigned char for safe use with character classification APIs.
-    /// </summary>
-    /// <param name="c">The character to convert.</param>
-    /// <returns>The converted unsigned char value.</returns>
+    /**
+     * @brief Convert a char to unsigned char for safe use with character classification APIs.
+     *
+     * @param c The character to convert.
+     * @return The converted unsigned char value.
+     */
     constexpr unsigned char ToUChar(char c) noexcept
     {
         return static_cast<unsigned char>(c);
     }
 
-    /// <summary>
-    /// Build the fixed lookup table for single-character literal token kinds.
-    /// </summary>
-    /// <returns>The initialized character token lookup table.</returns>
+    /**
+     * @brief Build the fixed lookup table for single-character literal token kinds.
+     *
+     * @return The initialized character token lookup table.
+     */
     constexpr std::array<TokenKind, 256> MakeCharLiterals()
     {
         std::array<TokenKind, 256> literals;
@@ -45,16 +46,17 @@ namespace
 
     constexpr auto CharLiterals = MakeCharLiterals();
 
-    /// <summary>
-    /// Convert a TokenKind enum value into a human-readable text label.
-    /// </summary>
-    /// <param name="aKind">The token kind to convert.</param>
-    /// <returns>The token kind text label.</returns>
+    /**
+     * @brief Convert a TokenKind enum value into a human-readable text label.
+     *
+     * @param aKind The token kind to convert.
+     * @return The token kind text label.
+     */
     std::string_view TokenKindToText(TokenKind aKind)
     {
         switch (aKind)
         {
-		using enum TokenKind;
+        using enum TokenKind;
         case End:            return "End";
         case Invalid:        return "Invalid";
         case Whitespace:     return "Whitespace";
@@ -72,17 +74,18 @@ namespace
         case CloseParen:     return "CloseParen";
         case OpenCurly:      return "OpenCurly";
         case CloseCurly:     return "CloseCurly";
-		}
+        }
 
-		assert(false && "Invalid TokenKind");
-		return "";
+        assert(false && "Invalid TokenKind");
+        return "";
     }
 
-    /// <summary>
-    /// Format a token value for display, escaping whitespace characters.
-    /// </summary>
-    /// <param name="arView">The token value to format.</param>
-    /// <returns>The escaped display string view.</returns>
+    /**
+     * @brief Format a token value for display, escaping whitespace characters.
+     *
+     * @param arView The token value to format.
+     * @return The escaped display string view.
+     */
     std::string_view TokenValueToText(const std::string_view arView)
     {
         std::string_view v{ arView };
@@ -97,58 +100,72 @@ namespace
             {
                 v = "\\t";
             }
-			else if (arView.at(0) == ' ')
-			{
-				v = "' '";
-			}
+            else if (arView.at(0) == ' ')
+            {
+                v = "' '";
+            }
         }
 
         return v;
     }
 
-    /// <summary>
-    /// Serialize a Token to a text representation for debugging output.
-    /// </summary>
-    /// <param name="aToken">The token to serialize.</param>
-    /// <returns>The formatted token string.</returns>
+    /**
+     * @brief Serialize a Token to a text representation for debugging output.
+     *
+     * @param aToken The token to serialize.
+     * @return The formatted token string.
+     */
     std::string TokenToText(const Token& aToken)
     {
-        return std::format("{} : {} : {{{}, {}}}", TokenKindToText(aToken.Kind), 
-			TokenValueToText(aToken.Value), aToken.Loc.Line, aToken.Loc.Col);
+        return std::format("{} : {} : {{{}, {}}}", TokenKindToText(aToken.Kind),
+            TokenValueToText(aToken.Value), aToken.Loc.Line, aToken.Loc.Col);
     }
 
-    /// <summary>
-    /// Determine whether a character may start an identifier.
-    /// </summary>
-    /// <param name="c">The character to test.</param>
-    /// <returns>True if the character may start an identifier.</returns>
-	bool StartsIdentifier(unsigned char c)
-	{
-		return isalpha(c) || c == '_';
-	}
+    /**
+     * @brief Determine whether a character may start an identifier.
+     *
+     * @param c The character to test.
+     * @return True if the character may start an identifier.
+     */
+    bool StartsIdentifier(unsigned char c)
+    {
+        return isalpha(c) || c == '_';
+    }
 
-    /// <summary>
-    /// Determine whether a character may continue an identifier.
-    /// </summary>
-    /// <param name="c">The character to test.</param>
-    /// <returns>True if the character may continue an identifier.</returns>
-	bool ContinuesIdentifier(unsigned char c)
-	{
-		return isalnum(c) || c == '_';
-	}
+    /**
+     * @brief Determine whether a character may continue an identifier.
+     *
+     * @param c The character to test.
+     * @return True if the character may continue an identifier.
+     */
+    bool ContinuesIdentifier(unsigned char c)
+    {
+        return isalnum(c) || c == '_';
+    }
 }
 
-/// <summary>
-/// Print the lexer input content to stdout.
-/// </summary>
+/**
+ * @brief Construct a new Lexer instance.
+ *
+ * @param apText The input text to tokenize.
+ */
+Lexer::Lexer(const char *apText)
+    : Content(apText), Cursor(0), LineIdx(0), StartOfLine(0)
+{
+    Tokenize();
+}
+
+/**
+ * @brief Print the lexer input content to stdout.
+ */
 void Lexer::PrintContent()
 {
     std::cout << Content << '\n';
 }
 
-/// <summary>
-/// Print all generated tokens to stdout.
-/// </summary>
+/**
+ * @brief Print all generated tokens to stdout.
+ */
 void Lexer::PrintTokens()
 {
     for (const auto& token : Tokens)
@@ -157,9 +174,9 @@ void Lexer::PrintTokens()
     }
 }
 
-/// <summary>
-/// Consume whitespace characters and update line/column tracking.
-/// </summary>
+/**
+ * @brief Consume whitespace characters and update line/column tracking.
+ */
 void Lexer::TrimWhitespace()
 {
     while (QCursorValid() && std::isspace(ToUChar(Content[Cursor])))
@@ -174,9 +191,9 @@ void Lexer::TrimWhitespace()
     }
 }
 
-/// <summary>
-/// Tokenize the entire input buffer into the token list.
-/// </summary>
+/**
+ * @brief Tokenize the entire input buffer into the token list.
+ */
 void Lexer::Tokenize()
 {
     while (QCursorValid())
@@ -185,9 +202,9 @@ void Lexer::Tokenize()
     }
 }
 
-/// <summary>
-/// Consume the next token from the input and add it to the token list.
-/// </summary>
+/**
+ * @brief Consume the next token from the input and add it to the token list.
+ */
 void Lexer::ConsumeToken()
 {
     if constexpr (TrimWhitespaceEnabled)
@@ -264,19 +281,20 @@ void Lexer::ConsumeToken()
     PushToken(std::move(token));
 }
 
-/// <summary>
-/// Advance the read cursor by one character.
-/// </summary>
+/**
+ * @brief Advance the read cursor by one character.
+ */
 inline void Lexer::IterateChar()
 {
-	++Cursor;
+    ++Cursor;
 }
 
-/// <summary>
-/// Advance the read cursor by the specified number of characters.
-/// </summary>
-/// <param name="aCount">The number of characters to advance.</param>
+/**
+ * @brief Advance the read cursor by the specified number of characters.
+ *
+ * @param aCount The number of characters to advance.
+ */
 inline void Lexer::IterateChars(size_t aCount)
 {
-	Cursor += aCount;
+    Cursor += aCount;
 }

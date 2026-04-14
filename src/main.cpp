@@ -1,8 +1,16 @@
 #include "Lexer.hpp"
+#include "Parser.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
+/**
+ * @brief Program entry point for the RePL interpreter.
+ *
+ * @param argc Argument count.
+ * @param argv Argument values.
+ * @return Exit status code.
+ */
 int main(int argc, char* argv[])
 {
     const bool fileMode = argc > 1;
@@ -20,10 +28,9 @@ int main(int argc, char* argv[])
         }
 
         Lexer lexer(content.c_str());
-        lexer.PrintContent();
-        lexer.PrintTokens();
-
-        std::puts("Done");
+        //lexer.PrintContent();
+        //lexer.PrintTokens();
+        Parser parser(lexer.QTokens());
     }
     else
     {
