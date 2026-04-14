@@ -18,7 +18,7 @@ enum class TokenKind : uint8_t
     // Keywords and Identifiers
     Keyword, Identifier,
     // Literals
-    IntLiteral, FloatLiteral, StringLiteral, CharLiteral,
+    IntLiteral, FloatLiteral, HalfFloatLiteral,StringLiteral, CharLiteral,
     // Preprocessor
     Preprocessor,
     // Single Character Literals

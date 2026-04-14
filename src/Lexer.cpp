@@ -62,32 +62,33 @@ namespace
         switch (aKind)
         {
         using enum TokenKind;
-        case Invalid:        return "Invalid";
-        case End:            return "End";
-        case Whitespace:     return "Whitespace";
-        case NewLine:        return "NewLine";
-        case Tab:            return "Tab";
-        case LineComment:    return "LineComment";
-        case BlockComment:   return "BlockComment";
-        case Keyword:        return "Keyword";
-        case Identifier:     return "Identifier";
-        case IntLiteral:     return "IntLiteral";
-        case FloatLiteral:   return "FloatLiteral";
-        case StringLiteral:  return "StringLiteral";
-        case CharLiteral:    return "CharLiteral";
-        case Preprocessor:   return "Preprocessor";
-        case Semicolon:      return "Semicolon";
-        case Colon:          return "Colon";
-        case Comma:          return "Comma";
-        case Period:         return "Period";
-        case OpenParen:      return "OpenParen";
-        case CloseParen:     return "CloseParen";
-        case OpenCurly:      return "OpenCurly";
-        case CloseCurly:     return "CloseCurly";
-        case OpenBracket:    return "OpenBracket";
-        case CloseBracket:   return "CloseBracket";
-        case OpenAngle:      return "OpenAngle";
-        case CloseAngle:     return "CloseAngle";
+        case Invalid:           return "Invalid";
+        case End:               return "End";
+        case Whitespace:        return "Whitespace";
+        case NewLine:           return "NewLine";
+        case Tab:               return "Tab";
+        case LineComment:       return "LineComment";
+        case BlockComment:      return "BlockComment";
+        case Keyword:           return "Keyword";
+        case Identifier:        return "Identifier";
+        case IntLiteral:        return "IntLiteral";
+        case FloatLiteral:      return "FloatLiteral";
+        case HalfFloatLiteral:  return "HalfFloatLiteral";
+        case StringLiteral:     return "StringLiteral";
+        case CharLiteral:       return "CharLiteral";
+        case Preprocessor:      return "Preprocessor";
+        case Semicolon:         return "Semicolon";
+        case Colon:             return "Colon";
+        case Comma:             return "Comma";
+        case Period:            return "Period";
+        case OpenParen:         return "OpenParen";
+        case CloseParen:        return "CloseParen";
+        case OpenCurly:         return "OpenCurly";
+        case CloseCurly:        return "CloseCurly";
+        case OpenBracket:       return "OpenBracket";
+        case CloseBracket:      return "CloseBracket";
+        case OpenAngle:         return "OpenAngle";
+        case CloseAngle:        return "CloseAngle";
         }
 
         assert(false && "Invalid TokenKind");
@@ -288,13 +289,34 @@ void Lexer::ConsumeToken()
     }
     else if (std::isdigit(ToUChar(c)))
     {
-        token.Kind = TokenKind::IntLiteral;
         const size_t begin = Cursor;
         IterateChar(); // Consume first digit
         while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
         {
             IterateChar();
         }
+
+        bool isFloat = false;
+        if (QCursorValid() && PeekCursor() == '.' && std::isdigit(ToUChar(PeekAt(1))))
+        {
+            isFloat = true;
+            IterateChar(); // Consume decimal point
+            while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
+            {
+                IterateChar();
+            }
+        }
+
+        if (isFloat && QCursorValid() && PeekCursor() == 'h')
+        {
+            token.Kind = TokenKind::HalfFloatLiteral;
+            IterateChar(); // Consume the half-float suffix
+        }
+        else
+        {
+            token.Kind = isFloat ? TokenKind::FloatLiteral : TokenKind::IntLiteral;
+        }
+
         token.Value = Content.substr(begin, Cursor - begin);
         token.Loc = { LineIdx, begin - StartOfLine };
     }
