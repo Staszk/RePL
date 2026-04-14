@@ -1,4 +1,5 @@
 #include "Lexer.hpp"
+#include <algorithm>
 #include <array>
 #include <format>
 #include <iostream>
@@ -6,8 +7,6 @@
 
 namespace
 {
-    constexpr bool TrimWhitespaceEnabled = true;
-
     /**
      * @brief Convert a char to unsigned char for safe use with character classification APIs.
      *
@@ -17,6 +16,33 @@ namespace
     constexpr unsigned char ToUChar(char c) noexcept
     {
         return static_cast<unsigned char>(c);
+    }
+
+    constexpr std::array<std::string_view, 12> Keywords =
+    {
+        "auto",
+        "break",
+        "continue",
+        "else",
+        "for",
+        "if",
+        "int",
+        "return",
+        "string",
+        "struct",
+        "while",
+        "void",
+    };
+
+    /**
+     * @brief Check if a string value is a reserved keyword.
+     * 
+     * @param value The string value to check.
+     * @return True if the value is a keyword, false otherwise.
+     */
+    constexpr bool IsKeyword(std::string_view value)
+    {
+        return std::find(Keywords.begin(), Keywords.end(), value) != Keywords.end();
     }
 
     /**
@@ -201,7 +227,7 @@ namespace
  *
  * @param apText The input text to tokenize.
  */
-Lexer::Lexer(const char *apText)
+Lexer::Lexer(std::string_view apText)
     : Content(apText), ContentSize(Content.size())
 {
     Tokenize();
@@ -231,7 +257,7 @@ void Lexer::PrintTokens()
  */
 void Lexer::Tokenize()
 {
-    while (QCursorValid())
+    while (CursorValid())
     {
         ConsumeToken();
     }
@@ -242,15 +268,9 @@ void Lexer::Tokenize()
  */
 void Lexer::TrimWhitespace()
 {
-    while (QCursorValid() && std::isspace(ToUChar(PeekCursor())))
+    while (CursorValid() && std::isspace(ToUChar(PeekCursor())))
     {
-        if (PeekCursor() == '\n')
-        {
-            ++LineIdx;
-            StartOfLine = Cursor + 1;
-        }
-
-        IterateChar();
+        Advance();
     }
 }
 
@@ -259,13 +279,10 @@ void Lexer::TrimWhitespace()
  */
 void Lexer::ConsumeToken()
 {
-    if constexpr (TrimWhitespaceEnabled)
+    TrimWhitespace();
+    if (!CursorValid())
     {
-        TrimWhitespace();
-        if (!QCursorValid())
-        {
-            return;
-        }
+        return;
     }
 
     Token token{};
@@ -401,17 +418,7 @@ void Lexer::ConsumeSingleCharToken(Token& arToken, TokenKind aKind)
     arToken.Kind = aKind;
     arToken.Value = Content.substr(Cursor, 1);
     arToken.Loc = { LineIdx, Cursor - StartOfLine };
-
-    if constexpr (!TrimWhitespaceEnabled)
-    {
-        if (arToken.Kind == TokenKind::NewLine)
-        {
-            ++LineIdx;
-            StartOfLine = Cursor + 1;
-        }
-    }
-
-    IterateChar();
+    Advance();
 }
 
 /**
@@ -422,27 +429,27 @@ void Lexer::ConsumeSingleCharToken(Token& arToken, TokenKind aKind)
 void Lexer::ConsumeNumericLiteralToken(Token& arToken)
 {
     const size_t begin = Cursor;
-    IterateChar(); // Consume first digit
-    while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
+    Advance(); // Consume first digit
+    while (CursorValid() && std::isdigit(ToUChar(PeekCursor())))
     {
-        IterateChar();
+        Advance();
     }
 
     bool isFloat = false;
-    if (QCursorValid() && PeekCursor() == '.' && std::isdigit(ToUChar(PeekAt(1))))
+    if (CursorValid() && PeekCursor() == '.' && std::isdigit(ToUChar(PeekAt(1))))
     {
         isFloat = true;
-        IterateChar(); // Consume decimal point
-        while (QCursorValid() && std::isdigit(ToUChar(PeekCursor())))
+        Advance(); // Consume decimal point
+        while (CursorValid() && std::isdigit(ToUChar(PeekCursor())))
         {
-            IterateChar();
+            Advance();
         }
     }
 
-    if (isFloat && QCursorValid() && PeekCursor() == 'h')
+    if (isFloat && CursorValid() && PeekCursor() == 'h')
     {
         arToken.Kind = TokenKind::HalfFloatLiteral;
-        IterateChar(); // Consume the half-float suffix
+        Advance(); // Consume the half-float suffix
     }
     else
     {
@@ -460,14 +467,15 @@ void Lexer::ConsumeNumericLiteralToken(Token& arToken)
  */
 void Lexer::ConsumeIdentifierToken(Token& arToken)
 {
-    arToken.Kind = TokenKind::Identifier;
     const size_t begin = Cursor;
-    IterateChar(); // Consume first character
-    while (QCursorValid() && ContinuesIdentifier(ToUChar(PeekCursor())))
+    Advance(); // Consume first character
+    while (CursorValid() && ContinuesIdentifier(ToUChar(PeekCursor())))
     {
-        IterateChar();
+        Advance();
     }
+
     arToken.Value = Content.substr(begin, Cursor - begin);
+    arToken.Kind = IsKeyword(arToken.Value) ? TokenKind::Keyword : TokenKind::Identifier;
     arToken.Loc = { LineIdx, begin - StartOfLine };
 }
 
@@ -482,21 +490,19 @@ void Lexer::ConsumePreprocessorToken(Token& arToken)
     const size_t lineIdxBegin = LineIdx;
     const size_t lineBegin = StartOfLine;
     const size_t tokenBegin = Cursor;
-    while (QCursorValid() && PeekCursor() != '\n')
+    while (CursorValid() && PeekCursor() != '\n')
     {
         if (PeekCursor() == '\\') // Handle line continuation
         {
-            IterateChar(); // Consume backslash
-            if (QCursorValid() && PeekCursor() == '\n')
+            Advance(); // Consume backslash
+            if (CursorValid() && PeekCursor() == '\n')
             {
-                ++LineIdx;
-                StartOfLine = Cursor + 1;
-                IterateChar(); // Consume newline
+                Advance(); // Consume newline and update line tracking
             }
         }
         else
         {
-            IterateChar();
+            Advance();
         }
     }
     arToken.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
@@ -512,25 +518,25 @@ void Lexer::ConsumeStringLiteralToken(Token& arToken)
 {
     arToken.Kind = TokenKind::StringLiteral;
     const size_t begin = Cursor;
-    IterateChar(); // Consume opening quote
-    while (QCursorValid() && PeekCursor() != '"')
+    Advance(); // Consume opening quote
+    while (CursorValid() && PeekCursor() != '"')
     {
         if (PeekCursor() == '\\') // Handle escape sequences
         {
-            IterateChar(); // Consume backslash
-            if (QCursorValid())
+            Advance(); // Consume backslash
+            if (CursorValid())
             {
-                IterateChar(); // Consume escaped character
+                Advance(); // Consume escaped character
             }
         }
         else
         {
-            IterateChar();
+            Advance();
         }
     }
-    if (QCursorValid())
+    if (CursorValid())
     {
-        IterateChar(); // Consume closing quote
+        Advance(); // Consume closing quote
     }
     arToken.Value = Content.substr(begin, Cursor - begin);
     arToken.Loc = { LineIdx, begin - StartOfLine };
@@ -545,26 +551,26 @@ void Lexer::ConsumeCharLiteralToken(Token& arToken)
 {
     arToken.Kind = TokenKind::CharLiteral;
     const size_t begin = Cursor;
-    IterateChar(); // Consume opening quote
-    if (QCursorValid())
+    Advance(); // Consume opening quote
+    if (CursorValid())
     {
         if (PeekCursor() == '\\') // Handle escape sequences
         {
-            IterateChar(); // Consume backslash
-            if (QCursorValid())
+            Advance(); // Consume backslash
+            if (CursorValid())
             {
-                IterateChar(); // Consume escaped character
+                Advance(); // Consume escaped character
             }
         }
         else
         {
-            IterateChar(); // Consume character
+            Advance(); // Consume character
         }
     }
 
-    if (QCursorValid() && PeekCursor() == '\'')
+    if (CursorValid() && PeekCursor() == '\'')
     {
-        IterateChar(); // Consume closing quote
+        Advance(); // Consume closing quote
     }
     arToken.Value = Content.substr(begin, Cursor - begin);
     arToken.Loc = { LineIdx, begin - StartOfLine };
@@ -579,9 +585,9 @@ void Lexer::ConsumeLineCommentToken(Token& arToken)
 {
     arToken.Kind = TokenKind::LineComment;
     const size_t begin = Cursor;
-    while (QCursorValid() && PeekCursor() != '\n')
+    while (CursorValid() && PeekCursor() != '\n')
     {
-        IterateChar();
+        Advance();
     }
     arToken.Value = Content.substr(begin, Cursor - begin);
     arToken.Loc = { LineIdx, begin - StartOfLine };
@@ -598,17 +604,17 @@ void Lexer::ConsumeBlockCommentToken(Token& arToken)
     const size_t lineIdxBegin = LineIdx;
     const size_t lineBegin = StartOfLine;
     const size_t tokenBegin = Cursor;
-    IterateChars(2); // Consume opening '/*'
-    while (QCursorValid() && !EndsBlockComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1))))
+    AdvanceBy(2); // Consume opening '/*'
+    while (CursorValid() && !EndsBlockComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1))))
     {
-        if (PeekCursor() == '\n')
-        {
-            ++LineIdx;
-            StartOfLine = Cursor + 1;
-        }
-        IterateChar();
+        Advance();
     }
-    IterateChars(2); // Consume closing '*/'
+
+    if (CursorValid() && EndsBlockComment(ToUChar(PeekCursor()), ToUChar(PeekAt(1))))
+    {
+        AdvanceBy(2); // Consume closing '*/'
+    }
+
     arToken.Value = Content.substr(tokenBegin, Cursor - tokenBegin);
     arToken.Loc = { lineIdxBegin, tokenBegin - lineBegin };
 }
@@ -620,16 +626,28 @@ void Lexer::ConsumeBlockCommentToken(Token& arToken)
  */
 void Lexer::ConsumeUnknownToken(Token& arToken)
 {
+    arToken.Kind = TokenKind::Invalid;
     arToken.Value = Content.substr(Cursor, 1);
     arToken.Loc = { LineIdx, Cursor - StartOfLine };
-    IterateChar();
+    Advance();
 }
 
 /**
  * @brief Advance the read cursor by one character.
  */
-inline void Lexer::IterateChar()
+inline void Lexer::Advance()
 {
+    if (!CursorValid())
+    {
+        return;
+    }
+
+    if (PeekCursor() == '\n')
+    {
+        ++LineIdx;
+        StartOfLine = Cursor + 1;
+    }
+
     ++Cursor;
 }
 
@@ -638,22 +656,22 @@ inline void Lexer::IterateChar()
  *
  * @param aCount The number of characters to advance.
  */
-inline void Lexer::IterateChars(size_t aCount)
+inline void Lexer::AdvanceBy(size_t aCount)
 {
-    Cursor += aCount;
+    while (aCount-- > 0)
+    {
+        Advance();
+    }
 }
 
 /**
  * @brief Peek at a character at a specific offset from the current cursor position.
  *
  * @param offset The offset from the current cursor position.
- * @return A reference to the character at the specified offset.
+ * @return The character at the specified offset or '\0' when overrun.
  */
-const char &Lexer::PeekAt(size_t offset) const
+char Lexer::PeekAt(size_t offset) const
 {
-    if (Cursor + offset < ContentSize)
-    {
-        return Content.at(Cursor + offset);
-    }
-    return Content.back();
+    const size_t index = Cursor + offset;
+    return index < ContentSize ? Content.at(index) : '\0';
 }

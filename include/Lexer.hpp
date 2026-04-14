@@ -15,7 +15,7 @@ class Lexer final
 {
 public:
 
-    Lexer(const char* apText);
+    explicit Lexer(std::string_view text);
 
     void PrintContent();
     void PrintTokens();
@@ -25,7 +25,8 @@ public:
      *
      * @return A const reference to the vector of tokens.
      */
-    const std::vector<Token>& QTokens() const { return Tokens; }
+    const std::vector<Token>& tokens() const { return Tokens; }
+    const std::vector<Token>& QTokens() const { return tokens(); }
 
 private:
     void Tokenize();
@@ -52,16 +53,16 @@ private:
     void ConsumeBlockCommentToken(Token& arToken);
     void ConsumeUnknownToken(Token& arToken);
 
-    void IterateChar();
-    void IterateChars(size_t aCount);
-    const char& PeekAt(size_t offset) const;
+    void Advance();
+    void AdvanceBy(size_t aCount);
+    char PeekAt(size_t offset) const;
 
     /**
      * @brief Peek at the current character under the cursor.
      *
-     * @return A reference to the current character.
+     * @return The current character or '\0' if at end of input.
      */
-    const char& PeekCursor() const { return PeekAt(0); }
+    char PeekCursor() const { return PeekAt(0); }
 
     /**
      * @brief Add a token to the output token list.
@@ -75,7 +76,7 @@ private:
      *
      * @return True if the cursor is valid; otherwise false.
      */
-    bool QCursorValid() const { return Cursor < ContentSize; }
+    bool CursorValid() const { return Cursor < ContentSize; }
 
     // Input
     const std::string_view Content{""};

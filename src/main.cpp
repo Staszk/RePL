@@ -37,10 +37,10 @@ int main(int argc, char* argv[])
             file.close();
         }
 
-        Lexer lexer(content.c_str());
+        Lexer lexer(content);
         //lexer.PrintContent();
         lexer.PrintTokens();
-        Parser parser(lexer.QTokens());
+        Parser parser(lexer.tokens());
     }
     else
     {
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            Lexer lexer(input.c_str());
+            Lexer lexer(input);
             lexer.PrintTokens();
         }
     }
