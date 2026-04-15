@@ -1,5 +1,5 @@
-#ifndef REPL_TOKEN_H
-#define REPL_TOKEN_H
+#ifndef REPL_TOKEN_HPP
+#define REPL_TOKEN_HPP
 
 #include <cstdint>
 #include <string_view>
@@ -21,11 +21,11 @@ enum class TokenKind : uint8_t
     // Comments
     LineComment, BlockComment,
 
-    // Keywords and Identifiers
-    Keyword, Identifier,
+    // Identifiers
+    Identifier,
 
     // Literals
-    IntLiteral, FloatLiteral, HalfFloatLiteral, StringLiteral, CharLiteral,
+    KeywordLiteral, IntLiteral, FloatLiteral, HalfFloatLiteral, StringLiteral, CharLiteral,
 
     // Preprocessor
     Preprocessor,
