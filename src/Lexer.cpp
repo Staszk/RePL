@@ -48,7 +48,7 @@ namespace
         return static_cast<unsigned char>(c);
     }
 
-    constexpr std::array<std::string_view, 11> KeywordLiterals =
+    constexpr std::array<std::string_view, 9> KeywordLiterals =
     {
         "break",
         "continue",

@@ -11,11 +11,13 @@ enum class ASTNodeKind : uint8_t
 {
     Invalid = 0,
     // Expressions
-    Expression,
+    Expr,
     IntLiteralExpr, FloatLiteralExpr, StringLiteralExpr, CharLiteralExpr,
     IdentifierExpr, BinaryExpr, UnaryExpr, CallExpr,
     // Statements
-    Statement,
+    Stmnt,
+    ExprStmnt, IfStmnt, ForStmnt, WhileStmnt, ReturnStmnt, ScopeStmnt, VarDeclStmnt,
+
 };
 
 /**
@@ -31,40 +33,39 @@ public:
     ASTNodeKind Kind{};
 };
 
-class ExpressionNode : public ASTNode
+class ExprNode : public ASTNode
 {
 public:
-    ExpressionNode() noexcept : ASTNode(ASTNodeKind::Expression) {}
-    ExpressionNode(ASTNodeKind aKind) noexcept : ASTNode(aKind) {}
+    ExprNode() noexcept : ASTNode(ASTNodeKind::Expr) {}
+    ExprNode(ASTNodeKind aKind) noexcept : ASTNode(aKind) {}
 
 };
 
-class IntLiteralExprNode final : public ExpressionNode
+class IntLiteralExprNode final : public ExprNode
 {
 public:
-    IntLiteralExprNode(const Token& token) noexcept : ExpressionNode(ASTNodeKind::IntLiteralExpr), ValueToken(token) {}
+    IntLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IntLiteralExpr), ValueToken(token) {}
 
 private:
     const Token& ValueToken;
 };
 
-class BinaryExprNode final : public ExpressionNode
+class BinaryExprNode final : public ExprNode
 {
 public:
-    BinaryExprNode(const Token& token, std::unique_ptr<ExpressionNode> left, std::unique_ptr<ExpressionNode> right)
-        noexcept : ExpressionNode(ASTNodeKind::BinaryExpr), OperatorToken(token), Left(std::move(left)), Right(std::move(right)) {}
+    BinaryExprNode(const Token& token, std::unique_ptr<ExprNode> left, std::unique_ptr<ExprNode> right)
+        noexcept : ExprNode(ASTNodeKind::BinaryExpr), OperatorToken(token), Left(std::move(left)), Right(std::move(right)) {}
 
 private:
     const Token& OperatorToken;
-    std::unique_ptr<ExpressionNode> Left;
-    std::unique_ptr<ExpressionNode> Right;
+    std::unique_ptr<ExprNode> Left;
+    std::unique_ptr<ExprNode> Right;
 };
-
 
 class StatementNode : public ASTNode
 {
 public:
-    StatementNode() : ASTNode(ASTNodeKind::Statement) {}
+    StatementNode() : ASTNode(ASTNodeKind::Stmnt) {}
 };
 
 #endif // REPL_AST_HPP

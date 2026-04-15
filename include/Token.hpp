@@ -35,6 +35,7 @@ enum class TokenKind : uint8_t
     PlusEqual, MinusEqual, Increment, Decrement, AsteriskEqual, SlashEqual, PercentEqual,
     EqualsEquals, NotEquals, LogicalAnd, LogicalOr,
     LessEqual, GreaterEqual,
+    Arrow,
 
     // Single Character Literals
     /// Operators
