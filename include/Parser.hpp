@@ -1,16 +1,9 @@
 #ifndef REPL_PARSER_HPP
 #define REPL_PARSER_HPP
 
+#include "AST.hpp"
 #include "Lexer.hpp"
 #include <memory>
-
-/**
- * @brief Base class for parser AST nodes.
- */
-class ASTNode {
-public:
-    virtual ~ASTNode() = default;
-};
 
 /**
  * @brief Recursive descent parser for the RePL language.
@@ -21,11 +14,18 @@ public:
     
 private:
     bool Check(TokenKind type) const;
-    Token Consume(TokenKind type, std::string_view message);
-    Token Advance();
+    const Token& Consume(TokenKind type, std::string_view message);
+    const Token& Advance();
     bool Match(TokenKind type);
     void Parse();
-    Token Peek() const;
+    const Token& Peek(size_t aOffset) const;
+
+    /**
+     * @brief Check if the current token position is valid for parsing.
+     * 
+     * @return True if the cursor is within the token stream bounds.
+     */
+    bool CursorValid() const { return Cursor < TokenCount; }
 
     /**
      * @brief Get the parser root AST node.
@@ -37,7 +37,8 @@ private:
     // Input
     const std::vector<Token>& Tokens;
     // State
-    size_t Current{};
+    const size_t TokenCount{0};
+    size_t Cursor{0};
     // Output
     std::unique_ptr<ASTNode> Root{};
 };

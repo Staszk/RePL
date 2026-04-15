@@ -1,5 +1,6 @@
 #include "Parser.hpp"
 #include <stdexcept>
+#include <iostream>
 
 /**
  * @brief Construct a new Parser instance.
@@ -7,7 +8,7 @@
  * @param arTokens The token stream to parse.
  */
 Parser::Parser(const std::vector<Token>& arTokens)
-    : Tokens(arTokens), Current(0)
+    : Tokens(arTokens), TokenCount(arTokens.size())
 {
     Parse();
 }
@@ -17,19 +18,29 @@ Parser::Parser(const std::vector<Token>& arTokens)
  */
 void Parser::Parse() 
 {
-    return;
+    while (CursorValid()) 
+    {
+        const Token& currentToken = Tokens[Cursor];
+        if (currentToken.Kind == TokenKind::IntLiteral)
+        {
+            IntLiteralExprNode intNode(currentToken);
+            // Here you would typically add intNode to the AST
+        }
+        Advance();
+    }
 }
 
 /**
- * @brief Peek at the current token without consuming it.
+ * @brief Peek at the specified token without consuming it.
  *
- * @return The current token.
+ * @param aOffset The lookahead offset from the current token.
+ * @return The token at the specified offset.
  */
-Token Parser::Peek() const 
+const Token& Parser::Peek(size_t aOffset) const 
 {
-    if (Current < Tokens.size()) 
+    if (Cursor + aOffset < TokenCount) 
     {
-        return Tokens[Current];
+        return Tokens[Cursor + aOffset];
     }
     return Tokens.back();
 }
@@ -39,16 +50,16 @@ Token Parser::Peek() const
  *
  * @return The token before advancing.
  */
-Token Parser::Advance() 
+const Token& Parser::Advance() 
 {
     if (Tokens.empty()) 
     {
         throw std::runtime_error("Parser has no tokens to advance.");
     }
 
-    if (Current < Tokens.size()) 
+    if (CursorValid()) 
     {
-        return Tokens[Current++];
+        return Tokens[Cursor++];
     }
 
     return Tokens.back();
@@ -62,11 +73,11 @@ Token Parser::Advance()
  */
 bool Parser::Check(TokenKind akind) const 
 {
-    if (Current >= Tokens.size()) 
+    if (CursorValid()) 
     {
         return false;
     }
-    return Tokens[Current].Kind == akind;
+    return Tokens[Cursor].Kind == akind;
 }
 
 /**
@@ -92,7 +103,7 @@ bool Parser::Match(TokenKind akind)
  * @param message The error message to use if consumption fails.
  * @return The consumed token.
  */
-Token Parser::Consume(TokenKind akind, std::string_view message) 
+const Token& Parser::Consume(TokenKind akind, std::string_view message) 
 {
     if (Check(akind)) 
     {

@@ -39,7 +39,9 @@ int main(int argc, char* argv[])
 
         Lexer lexer(content);
         //lexer.PrintContent();
-        lexer.PrintTokens();
+        //lexer.PrintTokens();
+        lexer.PrintWarnings();
+        lexer.PrintMetrics();
         Parser parser(lexer.tokens());
     }
     else
@@ -51,14 +53,15 @@ int main(int argc, char* argv[])
             std::cout << "> ";
             std::getline(std::cin, input);
 
-            if (input == "exit")
+            if (input == ":q" || input == ":quit" || input == ":exit")
             {
                 shouldExit = true;
                 continue;
             }
 
             Lexer lexer(input);
-            lexer.PrintTokens();
+            //lexer.PrintTokens();
+            Parser parser(lexer.tokens());
         }
     }
 

@@ -7,6 +7,37 @@
 namespace
 {
     /**
+    * @brief Convert a WarningLevel enum value into a human-readable text label.
+    *
+    * @param level The warning level to convert.
+    * @return The warning level text label.
+    */
+    constexpr std::string_view WarningLevelToText(WarningLevel level)
+    {
+        switch (level)
+        {
+        using enum WarningLevel;
+        case Info:    return "Info";
+        case Warning: return "Warning";
+        case Error:   return "Error";
+        }
+
+        assert(false && "Invalid WarningLevel");
+        return "";
+    }
+
+    /**
+    * @brief Format a Location struct into a human-readable text representation.
+    *
+    * @param loc The location to format.
+    * @return The formatted location string.
+    */
+    std::string LocationToText(const Location& loc)
+    {
+        return std::format("Line {}, Column {}", loc.Line + 1, loc.Col + 1);
+    }
+
+    /**
      * @brief Convert a char to unsigned char for safe use with character classification APIs.
      *
      * @param c The character to convert.
@@ -17,19 +48,16 @@ namespace
         return static_cast<unsigned char>(c);
     }
 
-    constexpr std::array<std::string_view, 12> Keywords =
+    constexpr std::array<std::string_view, 11> KeywordLiterals =
     {
-        "auto",
         "break",
         "continue",
         "else",
         "for",
         "if",
-        "int",
-        "return",
-        "string",
         "struct",
         "while",
+        "until"
         "void",
     };
 
@@ -39,9 +67,9 @@ namespace
      * @param value The string value to check.
      * @return True if the value is a keyword, false otherwise.
      */
-    constexpr bool IsKeyword(std::string_view value)
+    constexpr bool IsKeywordLiteral(std::string_view value)
     {
-        return std::find(Keywords.begin(), Keywords.end(), value) != Keywords.end();
+        return std::find(KeywordLiterals.begin(), KeywordLiterals.end(), value) != KeywordLiterals.end();
     }
 
     constexpr std::array<TokenLiteralInfo, 256> MakeTokenLiteralInfo()
@@ -68,7 +96,7 @@ namespace
         info[ToUChar('?')]  = {TokenKind::Question, {}, 0};
         
         info[ToUChar('+')]  = { TokenKind::Plus, {{ {"++", TokenKind::Increment}, {"+=", TokenKind::PlusEqual} }}, 2 };
-        info[ToUChar('-')]  = { TokenKind::Minus, {{ {"--", TokenKind::Decrement}, {"-=", TokenKind::MinusEqual} }}, 2 };
+        info[ToUChar('-')]  = { TokenKind::Minus, {{ {"--", TokenKind::Decrement}, {"-=", TokenKind::MinusEqual}, {"->", TokenKind::Arrow} }}, 2 };
         info[ToUChar('*')]  = { TokenKind::Asterisk, {{ {"*=" , TokenKind::AsteriskEqual} }}, 1 };
         info[ToUChar('/')]  = { TokenKind::Slash, {{ {"/=" , TokenKind::SlashEqual} }}, 1 };
         info[ToUChar('%')]  = { TokenKind::Percent, {{ {"%=" , TokenKind::PercentEqual} }}, 1 };
@@ -108,11 +136,11 @@ namespace
         case LineComment:       return "LineComment";
         case BlockComment:      return "BlockComment";
 
-        // Keywords and Identifiers
-        case Keyword:           return "Keyword";
+        // Identifiers
         case Identifier:        return "Identifier";
-
+        
         // Literals
+        case KeywordLiteral:    return "KeywordLiteral";
         case IntLiteral:        return "IntLiteral";
         case FloatLiteral:      return "FloatLiteral";
         case HalfFloatLiteral:  return "HalfFloatLiteral";
@@ -279,8 +307,9 @@ namespace
  * @param apText The input text to tokenize.
  */
 Lexer::Lexer(std::string_view apText)
-    : Content(apText), ContentSize(Content.size())
+    : Content(apText), ContentSize(Content.size()), StartTime(std::chrono::system_clock::now())
 {
+    std::cout << "| RePL Lexer Begin at " << std::format("{:%H:%M}", StartTime) << '\n';
     Tokenize();
 }
 
@@ -304,6 +333,35 @@ void Lexer::PrintTokens()
 }
 
 /**
+ * @brief Print all generated warnings to stdout.
+ */
+void Lexer::PrintWarnings()
+{
+    if (Warnings.empty())
+    {
+        return;
+    }
+
+    for (const auto& warning : Warnings)
+    {
+        std::cout << std::format("{} : {} : {}", WarningLevelToText(warning.Level), warning.Message, LocationToText(warning.Loc)) << '\n';
+    }
+}
+
+/**
+ * @brief Print lexer performance metrics to stdout.
+ */
+void Lexer::PrintMetrics()
+{
+    const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(EndTime - StartTime);
+    std::cout << "| RePL Lexer Completed at " << std::format("{:%H:%M}", EndTime) << '\n';
+    std::cout << "| Tokenization completed in " << duration.count() << " microseconds.\n";
+    std::cout << "| Average time per token: " << (Tokens.empty() ? 0 : static_cast<double>(duration.count()) / Tokens.size()) << " microseconds\n";
+    std::cout << "| Total tokens: " << Tokens.size() << '\n';
+    std::cout << "| Total warnings: " << Warnings.size() << '\n';
+}
+
+/**
  * @brief Tokenize the entire input buffer into the token list.
  */
 void Lexer::Tokenize()
@@ -312,6 +370,15 @@ void Lexer::Tokenize()
     {
         ConsumeToken();
     }
+
+    // Add an EOF token at the end of the token stream
+    PushToken({
+        .Kind = TokenKind::End, 
+        .Loc = { LineIdx, Cursor - StartOfLine },
+        .Value = "EOF" 
+    });
+
+    EndTime = std::chrono::system_clock::now();
 }
 
 /**
@@ -362,9 +429,9 @@ void Lexer::ConsumeToken()
     {
         ConsumeNumericLiteralToken(token);
     }
-    else if (IsIdentifierStart())
+    else if (IsIdentifierOrKeywordStart())
     {
-        ConsumeIdentifierToken(token);
+        ConsumeIdentifierOrKeywordToken(token);
     }
     else
     {
@@ -429,7 +496,7 @@ bool Lexer::IsNumericLiteralStart()
  *
  * @return True if the current character begins an identifier.
  */
-bool Lexer::IsIdentifierStart()
+bool Lexer::IsIdentifierOrKeywordStart()
 {
     return StartsIdentifier(ToUChar(PeekCursor()));
 }
@@ -544,7 +611,7 @@ void Lexer::ConsumeNumericLiteralToken(Token& arToken)
  * 
  * @param arToken The token to populate.
  */
-void Lexer::ConsumeIdentifierToken(Token& arToken)
+void Lexer::ConsumeIdentifierOrKeywordToken(Token& arToken)
 {
     const size_t begin = Cursor;
     Advance(); // Consume first character
@@ -554,7 +621,7 @@ void Lexer::ConsumeIdentifierToken(Token& arToken)
     }
 
     arToken.Value = Content.substr(begin, Cursor - begin);
-    arToken.Kind = IsKeyword(arToken.Value) ? TokenKind::Keyword : TokenKind::Identifier;
+    arToken.Kind = IsKeywordLiteral(arToken.Value) ? TokenKind::KeywordLiteral : TokenKind::Identifier;
     arToken.Loc = { LineIdx, begin - StartOfLine };
 }
 
@@ -708,6 +775,13 @@ void Lexer::ConsumeUnknownToken(Token& arToken)
     arToken.Kind = TokenKind::Invalid;
     arToken.Value = Content.substr(Cursor, 1);
     arToken.Loc = { LineIdx, Cursor - StartOfLine };
+
+    Warnings.push_back({
+        .Level = WarningLevel::Error,
+        .Message = std::format("Unrecognized token '{}'", arToken.Value),
+        .Loc = arToken.Loc
+    });
+
     Advance();
 }
 
@@ -752,5 +826,5 @@ inline void Lexer::AdvanceBy(size_t aCount)
 char Lexer::PeekAt(size_t offset) const
 {
     const size_t index = Cursor + offset;
-    return index < ContentSize ? Content.at(index) : '\0';
+    return index < ContentSize ? Content[index] : '\0';
 }
