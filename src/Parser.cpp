@@ -14,17 +14,24 @@ Parser::Parser(const std::vector<Token>& arTokens)
 }
 
 /**
- * @brief Parse the token stream and build the AST.
+ * @brief Parse the token stream and build the AST. Any parsing errors 
+ * will be caught and printed to stderr. 
  */
 void Parser::Parse() 
 {
-    // while (CursorValid()) 
-    // {
-    //     ParseExpression();
-    // }
-
-    Root = ParseExpression();
-    std::cout << "Parsed AST Root Node: " << ASTNodeKindToText(Root->Kind) << '\n';
+    try
+    {
+        Root = ParseExpression();
+        std::cout << "Parsed AST Root Node: " << ASTNodeKindToText(Root->Kind) << '\n';
+    }
+    catch(const ParserError& e)
+    {
+        std::cerr << std::format("Parser Error: {} at {}\n", e.Message, TokenHelpers::LocationToText(e.Loc));
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << std::format("Uncaptured Parser Exception: {}\n", e.what());
+    }
 }
 
 /**
@@ -140,11 +147,11 @@ std::unique_ptr<ASTNode> Parser::ParsePrimary()
     else if (Match({TokenKind::OpenParen}))
     {
         std::unique_ptr<ASTNode> expr = ParseExpression();
-        Consume(TokenKind::CloseParen, "Expected ')' after expression.");
+        Consume(TokenKind::CloseParen, "Expected ')' after expression");
         return std::make_unique<GroupingExprNode>(std::move(expr));
     }
 
-    throw std::runtime_error("Expected expression.");
+    throw GenerateError("Expected expression", Peek(0).Loc);
 }
 
 /**
@@ -156,7 +163,7 @@ const Token& Parser::Advance()
 {
     if (Tokens.empty()) 
     {
-        throw std::runtime_error("Parser has no tokens to advance.");
+        throw GenerateError("Parser has no tokens to advance", TokenLocation{0, 0});
     }
 
     if (CursorValid()) 
@@ -165,6 +172,19 @@ const Token& Parser::Advance()
     }
 
     return Tokens.back();
+}
+
+/**
+ * @brief Generate a parser error.
+ *
+ * @param message The error message.
+ * @param loc The location of the error.
+ * @return The generated parser error.
+ */
+const ParserError& Parser::GenerateError(const std::string_view message, const TokenLocation &loc)
+{
+    Errors.emplace_back( message, loc );
+    return Errors.back();
 }
 
 /**
@@ -202,7 +222,7 @@ bool Parser::Match(std::initializer_list<TokenKind> aKinds)
 }
 
 /**
- * @brief Consume a token of the expected kind or throw on mismatch.
+ * @brief Consume a token of the expected kind or generate an error on mismatch.
  *
  * @param akind The expected token kind.
  * @param message The error message to use if consumption fails.
@@ -214,5 +234,6 @@ const Token& Parser::Consume(TokenKind akind, std::string_view message)
     {
         return Advance();
     }
-    throw std::runtime_error(std::string(message));
+
+    throw GenerateError(message, Peek(0).Loc);
 }

@@ -52,7 +52,7 @@ enum class TokenKind : uint8_t
 /**
  * @brief Source location information for a token.
  */
-struct Location
+struct TokenLocation
 {
     size_t Line;
     size_t Col;
@@ -77,8 +77,15 @@ struct TokenLiteralInfo
 struct Token
 {
     TokenKind Kind;
-    Location Loc;
+    TokenLocation Loc;
     std::string_view Value;
 };
 
+namespace TokenHelpers
+{
+    std::string LocationToText(const TokenLocation& loc);
+    constexpr std::string_view TokenKindToText(TokenKind aKind);
+    std::string_view TokenValueToText(const std::string_view arView);
+    std::string TokenToText(const Token& aToken);
+}
 #endif // REPL_TOKEN_H

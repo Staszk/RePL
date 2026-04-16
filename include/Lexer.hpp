@@ -19,11 +19,11 @@ enum class WarningLevel
 /**
  * @brief Information about a lexer warning or error.
  */
-struct WarningInfo
+struct LexerWarningInfo
 {
     WarningLevel Level;
     std::string_view Message;
-    Location Loc;
+    TokenLocation Loc;
 };
 
 /**
@@ -112,7 +112,7 @@ private:
     const bool EnableMetrics{true};
     // Output
     std::vector<Token> Tokens{};
-    std::vector<WarningInfo> Warnings{};
+    std::vector<LexerWarningInfo> Warnings{};
     // Metrics
     std::chrono::system_clock::time_point StartTime{};
     std::chrono::system_clock::time_point EndTime{};

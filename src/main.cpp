@@ -56,7 +56,6 @@ int main(int argc, char* argv[])
             }
 
             Lexer lexer(input, false);
-            //lexer.PrintTokens();
             Parser parser(lexer.tokens());
         }
     }

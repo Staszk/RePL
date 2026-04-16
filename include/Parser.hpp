@@ -5,6 +5,15 @@
 #include "Lexer.hpp"
 #include <memory>
 
+class ParserError : public std::exception
+{
+public:
+    ParserError(const std::string_view message, const TokenLocation& loc)
+        : std::exception(), Message(message), Loc(loc) {}
+    const std::string_view Message;
+    const TokenLocation& Loc;
+};
+
 /**
  * @brief Recursive descent parser for the RePL language.
  */
@@ -13,6 +22,8 @@ public:
     Parser(const std::vector<Token>& tokens);
     
 private:
+
+    const ParserError& GenerateError(const std::string_view message, const TokenLocation& loc);
     bool Check(TokenKind type) const;
     const Token& Consume(TokenKind type, std::string_view message);
     const Token& Advance();
@@ -49,6 +60,7 @@ private:
     size_t Cursor{0};
     // Output
     std::unique_ptr<ASTNode> Root{};
+    std::vector<ParserError> Errors{};
 };
 
 #endif // REPL_PARSER_HPP
