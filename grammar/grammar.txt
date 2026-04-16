@@ -1,7 +1,39 @@
-expression          ->  literal
+expression          ->  equality
+                    |   comparison
+                    |   term
+                    |   factor
                     |   unary
-                    |   binary
-                    |   grouping
+                    |   primary
+                    ;
+
+equality            ->  comparison ( ( "!=" | "==" ) comparison )*
+                    |   term
+                    |   factor
+                    |   unary
+                    |   primary
+                    ;
+
+comparison          ->  term ( ( ">" | ">=" | "<" | "<=" ) term )*
+                    |   factor
+                    |   unary
+                    |   primary
+                    ;
+
+term                ->  factor ( ( "-" | "+" ) factor )*
+                    |   unary
+                    |   primary
+                    ;
+
+factor              ->  unary ( ( "/" | "*" ) unary )*
+                    |   primary
+                    ;
+
+unary               ->  ( "!" | "-" | "--" | "++" ) unary
+                    |   primary
+                    ;
+
+primary             ->  literal
+                    |   "(" expression ")"
                     ;
 
 literal             ->  keywordLiteral
@@ -40,15 +72,4 @@ types               ->  "u08"   |   "uint08"
                     |   "str"   |   "string"
                     |   "chr"   |   "char"
                     |               "struct"
-                    ;
-
-unary               ->  "-"
-                    |   "!"
-                    ;
-
-binary              ->  expression operator expression
-                    ;
-
-operator            ->  "=="  |  "!="  |  "<"   |  "<="  |  ">"   |  ">="
-                    |   "+"   |  "-"   |  "*"   |  "/"
                     ;

@@ -16,9 +16,17 @@ private:
     bool Check(TokenKind type) const;
     const Token& Consume(TokenKind type, std::string_view message);
     const Token& Advance();
-    bool Match(TokenKind type);
+    bool Match(std::initializer_list<TokenKind> aKinds);
     void Parse();
     const Token& Peek(size_t aOffset) const;
+
+    std::unique_ptr<ASTNode> ParseExpression();
+    std::unique_ptr<ASTNode> ParseEquality();
+    std::unique_ptr<ASTNode> ParseComparison();
+    std::unique_ptr<ASTNode> ParseTerm();
+    std::unique_ptr<ASTNode> ParseFactor();
+    std::unique_ptr<ASTNode> ParseUnary();
+    std::unique_ptr<ASTNode> ParsePrimary();
 
     /**
      * @brief Check if the current token position is valid for parsing.

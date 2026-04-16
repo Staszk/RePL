@@ -36,12 +36,10 @@ class Lexer final
 {
 public:
 
-    explicit Lexer(std::string_view text);
+    explicit Lexer(std::string_view text, bool printMetrics = true);
 
     void PrintContent();
     void PrintTokens();
-    void PrintWarnings();
-    void PrintMetrics();
 
     /**
      * @brief Query the generated tokens.
@@ -52,6 +50,9 @@ public:
     const std::vector<Token>& QTokens() const { return tokens(); }
 
 private:
+    void PrintWarnings();
+    void PrintMetrics();
+
     void Tokenize();
     void TrimWhitespace();
     void ConsumeToken();
@@ -108,6 +109,7 @@ private:
     size_t Cursor{0};
     size_t LineIdx{0};
     size_t StartOfLine{0};
+    const bool EnableMetrics{true};
     // Output
     std::vector<Token> Tokens{};
     std::vector<WarningInfo> Warnings{};

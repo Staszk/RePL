@@ -48,7 +48,7 @@ namespace
         return static_cast<unsigned char>(c);
     }
 
-    constexpr std::array<std::string_view, 9> KeywordLiterals =
+    constexpr std::array<std::string_view, 11> KeywordLiterals =
     {
         "break",
         "continue",
@@ -59,6 +59,8 @@ namespace
         "while",
         "until"
         "void",
+        "true",
+        "false",
     };
 
     /**
@@ -104,8 +106,8 @@ namespace
         info[ToUChar('|')]  = { TokenKind::Pipe, {{ {"||", TokenKind::LogicalOr} }}, 1 };
         info[ToUChar('=')]  = { TokenKind::Equal, {{ {"==", TokenKind::EqualsEquals} }}, 1 };
         info[ToUChar('!')]  = { TokenKind::Bang, {{ {"!=" , TokenKind::NotEquals} }}, 1 };
-        info[ToUChar('<')]  = { TokenKind::OpenAngle, {{ {"<=" , TokenKind::LessEqual} }}, 1 };
-        info[ToUChar('>')]  = { TokenKind::CloseAngle, {{ {">=" , TokenKind::GreaterEqual} }}, 1 };
+        info[ToUChar('<')]  = { TokenKind::Less, {{ {"<=" , TokenKind::LessEqual} }}, 1 };
+        info[ToUChar('>')]  = { TokenKind::Greater, {{ {">=" , TokenKind::GreaterEqual} }}, 1 };
 
         return info;
     }
@@ -180,6 +182,8 @@ namespace
         case Bang:              return "Bang";
         case Equal:             return "Equal";
         case Question:          return "Question";
+        case Less:              return "Less";
+        case Greater:           return "Greater";
         /// Delimiters
         case Semicolon:         return "Semicolon";
         case Colon:             return "Colon";
@@ -192,8 +196,6 @@ namespace
         case CloseCurly:        return "CloseCurly";
         case OpenBracket:       return "OpenBracket";
         case CloseBracket:      return "CloseBracket";
-        case OpenAngle:         return "OpenAngle";
-        case CloseAngle:        return "CloseAngle";
         }
 
         assert(false && "Invalid TokenKind");
@@ -305,11 +307,15 @@ namespace
  * @brief Construct a new Lexer instance.
  *
  * @param apText The input text to tokenize.
+ * @param abEnableMetrics Whether to print performance metrics.
  */
-Lexer::Lexer(std::string_view apText)
-    : Content(apText), ContentSize(Content.size()), StartTime(std::chrono::system_clock::now())
+Lexer::Lexer(std::string_view apText, const bool abEnableMetrics /* = true */)
+    : Content(apText), ContentSize(Content.size()), StartTime(std::chrono::system_clock::now()), EnableMetrics(abEnableMetrics)
 {
-    std::cout << "| RePL Lexer Begin at " << std::format("{:%H:%M}", StartTime) << '\n';
+    if (EnableMetrics)
+    {
+        std::cout << "| RePL Lexer Begin at " << std::format("{:%H:%M}", StartTime) << '\n';
+    }
     Tokenize();
 }
 

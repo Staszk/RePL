@@ -38,10 +38,6 @@ int main(int argc, char* argv[])
         }
 
         Lexer lexer(content);
-        //lexer.PrintContent();
-        //lexer.PrintTokens();
-        lexer.PrintWarnings();
-        lexer.PrintMetrics();
         Parser parser(lexer.tokens());
     }
     else
@@ -59,7 +55,7 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            Lexer lexer(input);
+            Lexer lexer(input, false);
             //lexer.PrintTokens();
             Parser parser(lexer.tokens());
         }

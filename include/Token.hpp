@@ -41,11 +41,12 @@ enum class TokenKind : uint8_t
     /// Operators
     Plus, Minus, Asterisk, Slash, Percent,
     Ampersand, Pipe, Caret, Tilde, Bang, Equal, Question,
+    Less, Greater,
     /// Delimiters
     Semicolon, Colon, Comma, Period,
     /// Scopes and Grouping
     OpenParen, CloseParen, OpenCurly, CloseCurly,
-    OpenBracket, CloseBracket, OpenAngle, CloseAngle,
+    OpenBracket, CloseBracket,
 };
 
 /**

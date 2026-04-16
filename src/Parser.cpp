@@ -18,16 +18,13 @@ Parser::Parser(const std::vector<Token>& arTokens)
  */
 void Parser::Parse() 
 {
-    while (CursorValid()) 
-    {
-        const Token& currentToken = Tokens[Cursor];
-        if (currentToken.Kind == TokenKind::IntLiteral)
-        {
-            IntLiteralExprNode intNode(currentToken);
-            // Here you would typically add intNode to the AST
-        }
-        Advance();
-    }
+    // while (CursorValid()) 
+    // {
+    //     ParseExpression();
+    // }
+
+    Root = ParseExpression();
+    std::cout << "Parsed AST Root Node: " << ASTNodeKindToText(Root->Kind) << '\n';
 }
 
 /**
@@ -43,6 +40,111 @@ const Token& Parser::Peek(size_t aOffset) const
         return Tokens[Cursor + aOffset];
     }
     return Tokens.back();
+}
+
+std::unique_ptr<ASTNode> Parser::ParseExpression()
+{
+    return ParseEquality();
+}
+
+std::unique_ptr<ASTNode> Parser::ParseEquality()
+{
+    std::unique_ptr<ASTNode> node = ParseComparison();
+
+    while (Match({TokenKind::EqualsEquals, TokenKind::NotEquals}))
+    {
+        const Token& operatorToken = Peek(-1);
+        std::unique_ptr<ASTNode> right = ParseComparison();
+        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+    }
+
+    return node;
+}
+
+std::unique_ptr<ASTNode> Parser::ParseComparison()
+{
+    std::unique_ptr<ASTNode> node = ParseTerm();
+
+    while (Match({TokenKind::LessEqual, TokenKind::GreaterEqual, TokenKind::Less, TokenKind::Greater}))
+    {
+        const Token& operatorToken = Peek(-1);
+        std::unique_ptr<ASTNode> right = ParseTerm();
+        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+    }
+
+    return node;
+}
+
+std::unique_ptr<ASTNode> Parser::ParseTerm()
+{
+    std::unique_ptr<ASTNode> node = ParseFactor();
+
+    while (Match({TokenKind::Plus, TokenKind::Minus}))
+    {
+        const Token& operatorToken = Peek(-1);
+        std::unique_ptr<ASTNode> right = ParseFactor();
+        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+    }
+
+    return node;
+}
+
+std::unique_ptr<ASTNode> Parser::ParseFactor()
+{
+    std::unique_ptr<ASTNode> node = ParseUnary();
+
+    while (Match({TokenKind::Asterisk, TokenKind::Slash, TokenKind::Percent}))
+    {
+        const Token& operatorToken = Peek(-1);
+        std::unique_ptr<ASTNode> right = ParseUnary();
+        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+    }
+
+    return node;
+}
+
+std::unique_ptr<ASTNode> Parser::ParseUnary()
+{
+    if (Match({TokenKind::Bang, TokenKind::Minus}))
+    {
+        const Token& operatorToken = Peek(-1);
+        std::unique_ptr<ASTNode> operand = ParseUnary();
+        return std::make_unique<UnaryExprNode>(operatorToken, std::move(operand));
+    }
+
+    return ParsePrimary();
+}
+
+std::unique_ptr<ASTNode> Parser::ParsePrimary()
+{
+    if (Match({TokenKind::IntLiteral}))
+    {
+        const Token& intToken = Peek(-1);
+        return std::make_unique<IntLiteralExprNode>(intToken);
+    }
+    else if (Match({TokenKind::StringLiteral}))
+    {
+        const Token& stringToken = Peek(-1);
+        return std::make_unique<StringLiteralExprNode>(stringToken);
+    }
+    else if (Match({TokenKind::Identifier}))
+    {
+        const Token& identifierToken = Peek(-1);
+        return std::make_unique<IdentifierExprNode>(identifierToken);
+    }
+    else if (Match({TokenKind::KeywordLiteral}))
+    {
+        const Token& keywordToken = Peek(-1);
+        return std::make_unique<KeywordLiteralExprNode>(keywordToken);
+    }
+    else if (Match({TokenKind::OpenParen}))
+    {
+        std::unique_ptr<ASTNode> expr = ParseExpression();
+        Consume(TokenKind::CloseParen, "Expected ')' after expression.");
+        return std::make_unique<GroupingExprNode>(std::move(expr));
+    }
+
+    throw std::runtime_error("Expected expression.");
 }
 
 /**
@@ -73,7 +175,7 @@ const Token& Parser::Advance()
  */
 bool Parser::Check(TokenKind akind) const 
 {
-    if (CursorValid()) 
+    if (!CursorValid()) 
     {
         return false;
     }
@@ -86,12 +188,15 @@ bool Parser::Check(TokenKind akind) const
  * @param akind The token kind to match.
  * @return True when the token matched and was consumed.
  */
-bool Parser::Match(TokenKind akind) 
+bool Parser::Match(std::initializer_list<TokenKind> aKinds) 
 {
-    if (Check(akind)) 
+    for (TokenKind akind : aKinds)
     {
-        Advance();
-        return true;
+        if (Check(akind)) 
+        {
+            Advance();
+            return true;
+        }
     }
     return false;
 }
