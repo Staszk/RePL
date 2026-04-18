@@ -5,35 +5,21 @@
 /**
  * @brief Print a string representation of the given AST node and its children.
  * 
- * @param node The AST node to print.
+ * @param node UNUSED: The AST node to print.
  * @return A string representation of the AST node and its children.
  */
-std::string ASTPrinter::Print(const class ASTNode& node)
+std::string ASTPrinter::Print(const class ASTNode&)
 {
-    switch (node.Kind)
-    {    
-    using enum ASTNodeKind;
-    case Invalid: return "Invalid";
-    case Expr: return Print(static_cast<const ExprNode&>(node));
-    case KeywordLiteralExpr: return Print(static_cast<const KeywordLiteralExprNode&>(node));
-    case IntLiteralExpr: return Print(static_cast<const IntLiteralExprNode&>(node));
-    case StringLiteralExpr: return Print(static_cast<const StringLiteralExprNode&>(node));
-    case IdentifierExpr: return Print(static_cast<const IdentifierExprNode&>(node));
-    case BinaryExpr: return Print(static_cast<const BinaryExprNode&>(node));
-    case UnaryExpr: return Print(static_cast<const UnaryExprNode&>(node));
-    case GroupingExpr: return Print(static_cast<const GroupingExprNode&>(node));
-    default: return "Unknown ASTNodeKind";
-    }
-
+    return "";
 }
 
 /**
  * @brief Print a string representation of the given expression node.
  * 
- * @param node The expression node to print.
+ * @param node UNUSED: The expression node to print.
  * @return A string representation of the expression node.
  */
-std::string ASTPrinter::Print(const class ExprNode& node)
+std::string ASTPrinter::Print(const class ExprNode&)
 {
     return "";
 }
@@ -41,95 +27,95 @@ std::string ASTPrinter::Print(const class ExprNode& node)
 /**
  * @brief Print a string representation of the given keyword literal expression node.
  * 
- * @param node The keyword literal expression node to print.
+ * @param arNode The keyword literal expression node to print.
  * @return A string representation of the keyword literal expression node.
  */
-std::string ASTPrinter::Print(const class KeywordLiteralExprNode& node)
+std::string ASTPrinter::Print(const class KeywordLiteralExprNode& arNode)
 {
-    return std::string(node.ValueToken.Value);
+    return std::string(arNode.ValueToken.Value);
 }
 
 /**
  * @brief Print a string representation of the given integer literal expression node.
  * 
- * @param node The integer literal expression node to print.
+ * @param arNode The integer literal expression node to print.
  * @return A string representation of the integer literal expression node.
  */
-std::string ASTPrinter::Print(const class IntLiteralExprNode& node)
+std::string ASTPrinter::Print(const class IntLiteralExprNode& arNode)
 {
-    return std::string(node.ValueToken.Value);
+    return std::string(arNode.ValueToken.Value);
 }
 
 /**
  * @brief Print a string representation of the given string literal expression node.
  * 
- * @param node The string literal expression node to print.
+ * @param arNode The string literal expression node to print.
  * @return A string representation of the string literal expression node.
  */
-std::string ASTPrinter::Print(const class StringLiteralExprNode& node)
+std::string ASTPrinter::Print(const class StringLiteralExprNode& arNode)
 {
-    return std::string(node.ValueToken.Value);
+    return std::string(arNode.ValueToken.Value);
 }
 
 /**
  * @brief Print a string representation of the given identifier expression node.
  * 
- * @param node The identifier expression node to print.
+ * @param arNode The identifier expression node to print.
  * @return A string representation of the identifier expression node.
  */
-std::string ASTPrinter::Print(const class IdentifierExprNode& node)
+std::string ASTPrinter::Print(const class IdentifierExprNode& arNode)
 {
-    return std::string(node.ValueToken.Value);
+    return std::string(arNode.ValueToken.Value);
 }
 
 /**
  * @brief Print a string representation of the given binary expression node.
  * 
- * @param node The binary expression node to print.
+ * @param arNode The binary expression node to print.
  * @return A string representation of the binary expression node.
  */
-std::string ASTPrinter::Print(const class BinaryExprNode& node)
+std::string ASTPrinter::Print(const class BinaryExprNode& arNode)
 {
-    return Parenthesize(node.OperatorToken.Value, { node.Left.get(), node.Right.get() });
+    return Parenthesize(arNode.OperatorToken.Value, { arNode.Left.get(), arNode.Right.get() });
 }
 
 /**
  * @brief Print a string representation of the given unary expression node.
  * 
- * @param node The unary expression node to print.
+ * @param arNode The unary expression node to print.
  * @return A string representation of the unary expression node.
  */
-std::string ASTPrinter::Print(const class UnaryExprNode& node)
+std::string ASTPrinter::Print(const class UnaryExprNode& arNode)
 {
-    return Parenthesize(node.OperatorToken.Value, { node.Operand.get() });
+    return Parenthesize(arNode.OperatorToken.Value, { arNode.Operand.get() });
 }
 
 /**
  * @brief Print a string representation of the given grouping expression node.
  * 
- * @param node The grouping expression node to print.
+ * @param arNode The grouping expression node to print.
  * @return A string representation of the grouping expression node.
  */
-std::string ASTPrinter::Print(const class GroupingExprNode& node)
+std::string ASTPrinter::Print(const class GroupingExprNode& arNode)
 {
-    return Parenthesize("group", { node.Inner.get() });
+    return Parenthesize("group", { arNode.Inner.get() });
 }
 
 /**
  * @brief Parenthesize a string representation of the given node name and its children.
  * 
- * @param name The name of the node.
- * @param children The list of child nodes.
+ * @param aName The name of the node.
+ * @param aChildren The list of child nodes.
  * @return A string representation of the parenthesized node.
  */
-std::string ASTPrinter::Parenthesize(const std::string_view name, std::initializer_list<const ASTNode*> children)
+std::string ASTPrinter::Parenthesize(const std::string_view aName, std::initializer_list<const ASTNode*> aChildren)
 {
     std::ostringstream result;
-    result << "(" << name;
-    for (const ASTNode* child : children)
+    result << "(" << aName;
+    for (const ASTNode* child : aChildren)
     {
         result << " ";
-        result << Print(*child);
+        result << child->Accept(this);
     }
     result << ")";
     return result.str();

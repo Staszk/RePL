@@ -24,7 +24,7 @@ void Parser::Parse()
     {
         Root = ParseExpression();
         ASTPrinter printer;
-        std::string result = printer.Print(*Root);
+        std::string result = Root->Accept(&printer);
         std::cout << "Parsed AST: " << result << '\n';
     }
     catch(const ParserError& e)
