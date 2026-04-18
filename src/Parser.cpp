@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "ASTPrinter.hpp"
 #include <stdexcept>
 #include <iostream>
 
@@ -22,7 +23,9 @@ void Parser::Parse()
     try
     {
         Root = ParseExpression();
-        std::cout << "Parsed AST Root Node: " << ASTNodeKindToText(Root->Kind) << '\n';
+        ASTPrinter printer;
+        std::string result = printer.Print(*Root);
+        std::cout << "Parsed AST: " << result << '\n';
     }
     catch(const ParserError& e)
     {
@@ -40,8 +43,10 @@ void Parser::Parse()
  * @param aOffset The lookahead offset from the current token. 
  * @return The token at the specified offset.
  */
-const Token& Parser::Peek(size_t aOffset /* = 0 */) const 
+const Token& Parser::Peek(std::ptrdiff_t aOffset /* = 0 */) const 
 {
+    assert(Cursor + aOffset >= 0 && "Peek value cannot be negative");
+
     if (Cursor + aOffset < TokenCount) 
     {
         return Tokens[Cursor + aOffset];

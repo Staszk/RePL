@@ -60,16 +60,19 @@ constexpr std::string_view ASTNodeKindToText(ASTNodeKind aKind)
  */
 class ASTNode 
 {
+    friend class ASTPrinter;
 public:
     ASTNode() noexcept : Kind(ASTNodeKind::Invalid) {}
     ASTNode(ASTNodeKind aKind) noexcept : Kind(aKind) {}
     virtual ~ASTNode() = default;
 
+protected:
     ASTNodeKind Kind{};
 };
 
 class ExprNode : public ASTNode
 {
+    friend class ASTPrinter;
 public:
     ExprNode() noexcept : ASTNode(ASTNodeKind::Expr) {}
     ExprNode(ASTNodeKind aKind) noexcept : ASTNode(aKind) {}
@@ -78,6 +81,7 @@ public:
 
 class KeywordLiteralExprNode final : public ExprNode
 {
+    friend class ASTPrinter;
 public:
     KeywordLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::KeywordLiteralExpr), ValueToken(token) {}
 
@@ -87,6 +91,7 @@ private:
 
 class IntLiteralExprNode final : public ExprNode
 {
+    friend class ASTPrinter;
 public:
     IntLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IntLiteralExpr), ValueToken(token) {}
 
@@ -96,6 +101,7 @@ private:
 
 class StringLiteralExprNode final : public ExprNode
 {
+    friend class ASTPrinter;
 public:
     StringLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::StringLiteralExpr), ValueToken(token) {}
 
@@ -105,15 +111,17 @@ private:
 
 class IdentifierExprNode final : public ExprNode
 {
+    friend class ASTPrinter;
 public:
-    IdentifierExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IdentifierExpr), NameToken(token) {}
+    IdentifierExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IdentifierExpr), ValueToken(token) {}
     
 private:
-    const Token& NameToken;
+    const Token& ValueToken;
 };
 
 class BinaryExprNode final : public ExprNode
 {
+    friend class ASTPrinter;
 public:
     BinaryExprNode(const Token& token, std::unique_ptr<ASTNode> left, std::unique_ptr<ASTNode> right)
         noexcept : ExprNode(ASTNodeKind::BinaryExpr), OperatorToken(token), Left(std::move(left)), Right(std::move(right)) {}
@@ -126,6 +134,7 @@ private:
 
 class UnaryExprNode final : public ExprNode
 {
+    friend class ASTPrinter;
 public:
     UnaryExprNode(const Token& token, std::unique_ptr<ASTNode> operand)
         noexcept : ExprNode(ASTNodeKind::UnaryExpr), OperatorToken(token), Operand(std::move(operand)) {}
@@ -137,6 +146,7 @@ private:
 
 class GroupingExprNode final : public ExprNode
 {
+    friend class ASTPrinter;
 public:
     GroupingExprNode(std::unique_ptr<ASTNode> inner) noexcept : ExprNode(ASTNodeKind::GroupingExpr), Inner(std::move(inner)) {}
 private:
@@ -145,6 +155,7 @@ private:
 
 class StatementNode : public ASTNode
 {
+    friend class ASTPrinter;
 public:
     StatementNode() : ASTNode(ASTNodeKind::Stmnt) {}
 };
