@@ -1,5 +1,6 @@
-#include "Lexer.hpp"
-#include "Parser.hpp"
+#include "REPL.hpp"
+#include "Compiler.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -37,27 +38,11 @@ int main(int argc, char* argv[])
             file.close();
         }
 
-        Lexer lexer(content);
-        Parser parser(lexer.tokens());
+        Compiler::Compile(content);
     }
     else
     {
-        bool shouldExit = false;
-        while (!shouldExit)
-        {
-            std::string input;
-            std::cout << "> ";
-            std::getline(std::cin, input);
-
-            if (input == ":q" || input == ":quit" || input == ":exit")
-            {
-                shouldExit = true;
-                continue;
-            }
-
-            Lexer lexer(input, false);
-            Parser parser(lexer.tokens());
-        }
+        REPL::Run();
     }
 
     return 0;

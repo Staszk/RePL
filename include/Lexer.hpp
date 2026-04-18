@@ -35,7 +35,6 @@ struct LexerWarningInfo
 class Lexer final
 {
 public:
-
     explicit Lexer(std::string_view text, bool printMetrics = true);
 
     void PrintContent();

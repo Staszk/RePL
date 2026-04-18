@@ -29,7 +29,8 @@ private:
     const Token& Advance();
     bool Match(std::initializer_list<TokenKind> aKinds);
     void Parse();
-    const Token& Peek(size_t aOffset) const;
+    const Token& Peek(size_t aOffset = 0) const;
+    void Synchronize();
 
     std::unique_ptr<ASTNode> ParseExpression();
     std::unique_ptr<ASTNode> ParseEquality();

@@ -37,10 +37,10 @@ void Parser::Parse()
 /**
  * @brief Peek at the specified token without consuming it.
  *
- * @param aOffset The lookahead offset from the current token.
+ * @param aOffset The lookahead offset from the current token. 
  * @return The token at the specified offset.
  */
-const Token& Parser::Peek(size_t aOffset) const 
+const Token& Parser::Peek(size_t aOffset /* = 0 */) const 
 {
     if (Cursor + aOffset < TokenCount) 
     {
@@ -49,11 +49,38 @@ const Token& Parser::Peek(size_t aOffset) const
     return Tokens.back();
 }
 
+/**
+ * @brief Synchronize the parser after an error by advancing until a statement boundary is found.
+ */
+void Parser::Synchronize()
+{
+    Advance();
+    while (CursorValid())
+    {
+        if (Peek(-1).Kind == TokenKind::Semicolon || Peek().Kind == TokenKind::KeywordLiteral)
+        {
+            return;
+        }
+
+        Advance();
+    }
+}
+
+/**
+ * @brief Parse an expression from the token stream.
+ *
+ * @return A unique pointer to the parsed expression AST node.
+ */
 std::unique_ptr<ASTNode> Parser::ParseExpression()
 {
     return ParseEquality();
 }
 
+/**
+ * @brief Parse an equality expression from the token stream.
+ *
+ * @return A unique pointer to the parsed equality AST node.
+ */
 std::unique_ptr<ASTNode> Parser::ParseEquality()
 {
     std::unique_ptr<ASTNode> node = ParseComparison();
@@ -68,6 +95,11 @@ std::unique_ptr<ASTNode> Parser::ParseEquality()
     return node;
 }
 
+/**
+ * @brief Parse a comparison expression from the token stream.
+ *
+ * @return A unique pointer to the parsed comparison AST node.
+ */
 std::unique_ptr<ASTNode> Parser::ParseComparison()
 {
     std::unique_ptr<ASTNode> node = ParseTerm();
@@ -82,6 +114,11 @@ std::unique_ptr<ASTNode> Parser::ParseComparison()
     return node;
 }
 
+/**
+ * @brief Parse a term expression from the token stream.
+ *
+ * @return A unique pointer to the parsed term AST node.
+ */
 std::unique_ptr<ASTNode> Parser::ParseTerm()
 {
     std::unique_ptr<ASTNode> node = ParseFactor();
@@ -96,6 +133,11 @@ std::unique_ptr<ASTNode> Parser::ParseTerm()
     return node;
 }
 
+/**
+ * @brief Parse a factor expression from the token stream.
+ *
+ * @return A unique pointer to the parsed factor AST node.
+ */
 std::unique_ptr<ASTNode> Parser::ParseFactor()
 {
     std::unique_ptr<ASTNode> node = ParseUnary();
@@ -110,6 +152,11 @@ std::unique_ptr<ASTNode> Parser::ParseFactor()
     return node;
 }
 
+/**
+ * @brief Parse a unary expression from the token stream.
+ *
+ * @return A unique pointer to the parsed unary AST node.
+ */
 std::unique_ptr<ASTNode> Parser::ParseUnary()
 {
     if (Match({TokenKind::Bang, TokenKind::Minus}))
@@ -122,6 +169,11 @@ std::unique_ptr<ASTNode> Parser::ParseUnary()
     return ParsePrimary();
 }
 
+/**
+ * @brief Parse a primary expression from the token stream.
+ *
+ * @return A unique pointer to the parsed primary AST node.
+ */
 std::unique_ptr<ASTNode> Parser::ParsePrimary()
 {
     if (Match({TokenKind::IntLiteral}))
@@ -151,7 +203,7 @@ std::unique_ptr<ASTNode> Parser::ParsePrimary()
         return std::make_unique<GroupingExprNode>(std::move(expr));
     }
 
-    throw GenerateError("Expected expression", Peek(0).Loc);
+    throw GenerateError("Expected expression", Peek().Loc);
 }
 
 /**
@@ -235,5 +287,5 @@ const Token& Parser::Consume(TokenKind akind, std::string_view message)
         return Advance();
     }
 
-    throw GenerateError(message, Peek(0).Loc);
+    throw GenerateError(message, Peek().Loc);
 }
