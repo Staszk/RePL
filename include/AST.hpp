@@ -1,12 +1,12 @@
 #ifndef REPL_AST_HPP
 #define REPL_AST_HPP
 
+#include "ASTPrinter.hpp"
+#include "Interpreter.hpp"
 #include "Token.hpp"
 #include <memory>
 #include <string_view>
 #include <assert.h>
-
-class ASTPrinter;
 
 /**
  * @brief Kinds of AST nodes in the parser.
@@ -63,12 +63,20 @@ constexpr std::string_view ASTNodeKindToText(ASTNodeKind aKind)
 class ASTNode 
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     ASTNode() noexcept : Kind(ASTNodeKind::Invalid) {}
     ASTNode(ASTNodeKind aKind) noexcept : Kind(aKind) {}
     virtual ~ASTNode() = default;
 
-    virtual std::string Accept(class ASTPrinter* apPrinter) const;
+    /**
+     * @brief Accept a visitor to print this node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this node.
+     */
+    virtual std::string Accept(ASTPrinter *apPrinter) const { return apPrinter->Print(*this); }
+    virtual InterpreterValue Accept(Interpreter& apInterpreter) const { return apInterpreter.Interpret(*this); }
 
 protected:
     ASTNodeKind Kind{};
@@ -77,20 +85,36 @@ protected:
 class ExprNode : public ASTNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     ExprNode() noexcept : ASTNode(ASTNodeKind::Expr) {}
     ExprNode(ASTNodeKind aKind) noexcept : ASTNode(aKind) {}
     
-    virtual std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this expression node.
+     */
+    virtual std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    virtual InterpreterValue Accept(Interpreter& apInterpreter) const { return apInterpreter.Interpret(*this); }
 };
 
 class KeywordLiteralExprNode final : public ExprNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     KeywordLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::KeywordLiteralExpr), ValueToken(token) {}
 
-    std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this keyword literal expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this keyword literal expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
 private:
     const Token& ValueToken;
 };
@@ -98,10 +122,38 @@ private:
 class IntLiteralExprNode final : public ExprNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     IntLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IntLiteralExpr), ValueToken(token) {}
 
-    std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this integer literal expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this integer literal expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+private:
+    const Token& ValueToken;
+};
+
+class FloatLiteralExprNode final : public ExprNode
+{
+    friend class ASTPrinter;
+    friend class Interpreter;
+public:
+    FloatLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::FloatLiteralExpr), ValueToken(token) {}
+
+    /**
+     * @brief Accept a visitor to print this float literal expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this float literal expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+
 private:
     const Token& ValueToken;
 };
@@ -109,10 +161,18 @@ private:
 class StringLiteralExprNode final : public ExprNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     StringLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::StringLiteralExpr), ValueToken(token) {}
 
-    std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this string literal expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this string literal expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
 private:
     const Token& ValueToken;
 };
@@ -120,10 +180,18 @@ private:
 class IdentifierExprNode final : public ExprNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     IdentifierExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IdentifierExpr), ValueToken(token) {}
     
-    std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this identifier expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this identifier expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
 private:
     const Token& ValueToken;
 };
@@ -131,11 +199,19 @@ private:
 class BinaryExprNode final : public ExprNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     BinaryExprNode(const Token& token, std::unique_ptr<ASTNode> left, std::unique_ptr<ASTNode> right)
         noexcept : ExprNode(ASTNodeKind::BinaryExpr), OperatorToken(token), Left(std::move(left)), Right(std::move(right)) {}
 
-    std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this binary expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this binary expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
 private:
     const Token& OperatorToken;
     std::unique_ptr<ASTNode> Left;
@@ -145,11 +221,19 @@ private:
 class UnaryExprNode final : public ExprNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     UnaryExprNode(const Token& token, std::unique_ptr<ASTNode> operand)
         noexcept : ExprNode(ASTNodeKind::UnaryExpr), OperatorToken(token), Operand(std::move(operand)) {}
 
-    std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this unary expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this unary expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
 private:
     const Token& OperatorToken;
     std::unique_ptr<ASTNode> Operand;
@@ -158,10 +242,18 @@ private:
 class GroupingExprNode final : public ExprNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     GroupingExprNode(std::unique_ptr<ASTNode> inner) noexcept : ExprNode(ASTNodeKind::GroupingExpr), Inner(std::move(inner)) {}
 
-    std::string Accept(class ASTPrinter* apPrinter) const override;
+    /**
+     * @brief Accept a visitor to print this grouping expression node.
+     * 
+     * @param apPrinter The AST printer visitor to accept.
+     * @return A string representation of this grouping expression node.
+     */
+    std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
+    InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
 private:
     std::unique_ptr<ASTNode> Inner;
 };
@@ -169,6 +261,7 @@ private:
 class StatementNode : public ASTNode
 {
     friend class ASTPrinter;
+	friend class Interpreter;
 public:
     StatementNode() : ASTNode(ASTNodeKind::Stmnt) {}
 };

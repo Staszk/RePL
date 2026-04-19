@@ -1,7 +1,7 @@
 #include "REPL.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
-
+#include "Interpreter.hpp"
 #include <iostream>
 
 namespace
@@ -73,4 +73,8 @@ void REPL::HandleInput( std::string_view input)
 {
     Lexer lexer(input, false);
     Parser parser(lexer.tokens());
+    Interpreter interpreter;
+    InterpreterValue result = parser.GetRoot()->Accept(interpreter);
+
+    std::cout << std::visit(Interpreter::Printer, result) << '\n';
 }

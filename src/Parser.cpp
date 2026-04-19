@@ -24,8 +24,6 @@ void Parser::Parse()
     {
         Root = ParseExpression();
         ASTPrinter printer;
-        std::string result = Root->Accept(&printer);
-        std::cout << "Parsed AST: " << result << '\n';
     }
     catch(const ParserError& e)
     {
@@ -185,6 +183,11 @@ std::unique_ptr<ASTNode> Parser::ParsePrimary()
     {
         const Token& intToken = Peek(-1);
         return std::make_unique<IntLiteralExprNode>(intToken);
+    }
+    else if (Match({TokenKind::FloatLiteral}))
+    {
+        const Token& floatToken = Peek(-1);
+        return std::make_unique<FloatLiteralExprNode>(floatToken);
     }
     else if (Match({TokenKind::StringLiteral}))
     {

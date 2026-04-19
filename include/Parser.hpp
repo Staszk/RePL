@@ -20,6 +20,13 @@ public:
 class Parser {
 public:
     Parser(const std::vector<Token>& tokens);
+
+    /**
+     * @brief Get the parser root AST node.
+     *
+     * @return A reference to the root AST node pointer.
+     */
+    std::unique_ptr<ASTNode>& GetRoot() { return Root; }
     
 private:
 
@@ -46,13 +53,6 @@ private:
      * @return True if the cursor is within the token stream bounds.
      */
     bool CursorValid() const { return Cursor < TokenCount; }
-
-    /**
-     * @brief Get the parser root AST node.
-     *
-     * @return A reference to the root AST node pointer.
-     */
-    std::unique_ptr<ASTNode>& GetRoot() { return Root; }
 
     // Input
     const std::vector<Token>& Tokens;

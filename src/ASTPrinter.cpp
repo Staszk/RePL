@@ -1,4 +1,5 @@
 #include "ASTPrinter.hpp"
+#include "AST.hpp"
 #include <string>
 #include <sstream>
 
@@ -42,6 +43,17 @@ std::string ASTPrinter::Print(const class KeywordLiteralExprNode& arNode)
  * @return A string representation of the integer literal expression node.
  */
 std::string ASTPrinter::Print(const class IntLiteralExprNode& arNode)
+{
+    return std::string(arNode.ValueToken.Value);
+}
+
+/**
+ * @brief Print a string representation of the given float literal expression node.
+ * 
+ * @param arNode The float literal expression node to print.
+ * @return A string representation of the float literal expression node.
+ */
+std::string ASTPrinter::Print(const class FloatLiteralExprNode& arNode)
 {
     return std::string(arNode.ValueToken.Value);
 }
