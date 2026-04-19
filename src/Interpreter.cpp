@@ -12,7 +12,7 @@ namespace
         [](int64_t left, float right) { return InterpreterValue(static_cast<float>(left) + right); },
         [](float left, int64_t right) { return InterpreterValue(left + static_cast<float>(right)); },
         [](float left, float right) { return InterpreterValue(left + right); },
-        [](std::string left, std::string right) { return InterpreterValue(std::string(left + right)); },
+        [](const std::string& left, const std::string& right) { return InterpreterValue(std::string(left + right)); },
         [](auto, auto) { return InterpreterValue(std::monostate{}); }
     };
 
@@ -23,7 +23,7 @@ namespace
         [](int64_t left, float right) { return InterpreterValue(static_cast<float>(left) - right); },
         [](float left, int64_t right) { return InterpreterValue(left - static_cast<float>(right)); },
         [](float left, float right) { return InterpreterValue(left - right); },
-        [](std::string, std::string) { return InterpreterValue(std::monostate{}); },
+        [](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
         [](auto, auto) { return InterpreterValue(std::monostate{}); }
     };
 
@@ -34,7 +34,7 @@ namespace
         [](int64_t left, float right) { return InterpreterValue(static_cast<float>(left) * right); },
         [](float left, int64_t right) { return InterpreterValue(left * static_cast<float>(right)); },
         [](float left, float right) { return InterpreterValue(left * right); },
-        [](std::string, std::string) { return InterpreterValue(std::monostate{}); },
+        [](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
         [](auto, auto) { return InterpreterValue(std::monostate{}); }
     };
 
@@ -45,7 +45,7 @@ namespace
         [](int64_t left, float right) { return right != 0.0 ? InterpreterValue(static_cast<float>(left) / right) : InterpreterValue(std::monostate{}); },
         [](float left, int64_t right) { return right != 0 ? InterpreterValue(left / static_cast<float>(right)) : InterpreterValue(std::monostate{}); },
         [](float left, float right) { return right != 0.0 ? InterpreterValue(left / right) : InterpreterValue(std::monostate{}); },
-        [](std::string, std::string) { return InterpreterValue(std::monostate{}); },
+        [](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
         [](auto, auto) { return InterpreterValue(std::monostate{}); }
     };
 
@@ -54,7 +54,7 @@ namespace
         [](std::monostate) { return InterpreterValue(std::monostate{}); },
         [](int64_t intValue) { return InterpreterValue(-intValue); },
         [](float floatValue) { return InterpreterValue(-floatValue); },
-        [](std::string) { return InterpreterValue(std::monostate{}); },
+        [](const std::string&) { return InterpreterValue(std::monostate{}); },
         [](nullptr_t) { return InterpreterValue(std::monostate{}); }
     };
 
@@ -63,7 +63,7 @@ namespace
         [](std::monostate) { return false; },
         [](int64_t intValue) { return intValue != 0; },
         [](float floatValue) { return floatValue != 0.0; },
-        [](std::string stringValue) { return !stringValue.empty(); },
+        [](const std::string& stringValue) { return !stringValue.empty(); },
         [](nullptr_t) { return false; }
     };
 }

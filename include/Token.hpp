@@ -2,6 +2,7 @@
 #define REPL_TOKEN_HPP
 
 #include <cstdint>
+#include <string>
 #include <string_view>
 #include <array>
 

@@ -18,7 +18,7 @@ public:
         [](std::monostate) { return std::string("null"); },
         [](int64_t intValue) { return std::to_string(intValue); },
         [](float floatValue) { return std::to_string(floatValue); },
-        [](std::string stringValue) { return stringValue; },
+        [](const std::string& stringValue) { return stringValue; },
         [](nullptr_t) { return std::string("null"); }
     };
 

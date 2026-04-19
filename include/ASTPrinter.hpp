@@ -1,7 +1,7 @@
 #ifndef REPL_ASTPRINTER_HPP
 #define REPL_ASTPRINTER_HPP
 
-#include <string_view>
+#include <string>
 
 class ASTPrinter
 {
