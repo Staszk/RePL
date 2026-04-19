@@ -27,11 +27,11 @@ void Parser::Parse()
     }
     catch(const ParserError& e)
     {
-        std::cerr << std::format("Parser Error: {} at {}\n", e.Message, TokenHelpers::LocationToText(e.Loc));
+        std::cout << std::format("Parser Error: {} at {}\n", e.Message, TokenHelpers::LocationToText(e.Loc));
     }
     catch(const std::exception& e)
     {
-        std::cerr << std::format("Uncaptured Parser Exception: {}\n", e.what());
+        std::cout << std::format("Uncaptured Parser Exception: {}\n", e.what());
     }
 }
 

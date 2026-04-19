@@ -17,10 +17,40 @@ namespace
         }
         return false;
     }
+
+    void SetScrollingRegion(int top, int bottom) 
+    {
+        // \033[top;bottomr
+        std::cout << "\033[" << top << ";" << bottom << "r" << std::flush;
+    }
+
+    void MoveTo(int row, int col) 
+    {
+        // \033[row;colH
+        std::cout << "\033[" << row << ";" << col << "H" << std::flush;
+    }
+
+    void Setup()
+    {
+        // Clear screen first
+        std::cout << "\033[2J" << std::flush;
+
+        MoveTo(1, 1);
+        std::cout << "\033[44;37m" << " RePL (Recreational Programming Language) REPL (Read - Evaluate - Print - Loop) " << "\033[0m";
+
+        SetScrollingRegion(2, 99);
+        MoveTo(2, 1);
+    }
 }
 
 void REPL::Run()
 {
+    // 1. Enter the Alternate Screen Buffer
+    // \033[?1049h is the ANSI escape code to switch buffers
+    std::cout << "\033[?1049h" << std::flush;
+
+    Setup();
+
     bool shouldExit = false;
     while (!shouldExit)
     {
@@ -50,6 +80,8 @@ void REPL::Run()
             HandleInput(input);
         }
     }
+
+    std::cout << "\033[?1049l" << std::flush;
 }
 
 void REPL::PrintHelp()
@@ -62,19 +94,17 @@ void REPL::PrintHelp()
 
 void REPL::ClearConsole()
 {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
+    Setup();
 }
 
 void REPL::HandleInput( std::string_view input)
 {
     Lexer lexer(input, false);
     Parser parser(lexer.tokens());
-    Interpreter interpreter;
-    InterpreterValue result = parser.GetRoot()->Accept(interpreter);
-
-    std::cout << std::visit(Interpreter::Printer, result) << '\n';
+    const auto& root = parser.GetRoot();
+    if (root != nullptr)
+    {
+        Interpreter interpreter;
+        std::cout << std::visit(Interpreter::Printer, root->Accept(interpreter)) << '\n';
+    }
 }
