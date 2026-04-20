@@ -81,6 +81,9 @@ void REPL::Run()
         }
     }
 
+    SetScrollingRegion(1, 99);
+    MoveTo(99, 1);
+
     std::cout << "\033[?1049l" << std::flush;
 }
 

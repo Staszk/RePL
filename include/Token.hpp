@@ -34,15 +34,15 @@ enum class TokenKind : uint8_t
     // Multi-Character Literals
     /// Compound Operators
     PlusEqual, MinusEqual, Increment, Decrement, AsteriskEqual, SlashEqual, PercentEqual,
-    EqualsEquals, NotEquals, LogicalAnd, LogicalOr,
-    LessEqual, GreaterEqual,
+    EqualEqual, NotEqual, LogicalAnd, LogicalOr,
+    LesserEqual, GreaterEqual,
     Arrow,
 
     // Single Character Literals
     /// Operators
     Plus, Minus, Asterisk, Slash, Percent,
     Ampersand, Pipe, Caret, Tilde, Bang, Equal, Question,
-    Less, Greater,
+    Lesser, Greater,
     /// Delimiters
     Semicolon, Colon, Comma, Period,
     /// Scopes and Grouping

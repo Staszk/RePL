@@ -63,11 +63,11 @@ namespace TokenHelpers
         case AsteriskEqual:     return "AsteriskEqual";
         case SlashEqual:        return "SlashEqual";
         case PercentEqual:      return "PercentEqual";
-        case EqualsEquals:      return "EqualsEquals";
-        case NotEquals:         return "NotEquals";
+        case EqualEqual:      return "EqualsEquals";
+        case NotEqual:         return "NotEquals";
         case LogicalAnd:        return "LogicalAnd";
         case LogicalOr:         return "LogicalOr";
-        case LessEqual:         return "LessEqual";
+        case LesserEqual:         return "LessEqual";
         case GreaterEqual:      return "GreaterEqual";
 
         // Single Character Literals
@@ -84,7 +84,7 @@ namespace TokenHelpers
         case Bang:              return "Bang";
         case Equal:             return "Equal";
         case Question:          return "Question";
-        case Less:              return "Less";
+        case Lesser:              return "Less";
         case Greater:           return "Greater";
         /// Delimiters
         case Semicolon:         return "Semicolon";

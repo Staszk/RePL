@@ -93,9 +93,9 @@ namespace
         info[ToUChar('%')]  = { TokenKind::Percent, {{ {"%=" , TokenKind::PercentEqual} }}, 1 };
         info[ToUChar('&')]  = { TokenKind::Ampersand, {{ {"&&", TokenKind::LogicalAnd} }}, 1 };
         info[ToUChar('|')]  = { TokenKind::Pipe, {{ {"||", TokenKind::LogicalOr} }}, 1 };
-        info[ToUChar('=')]  = { TokenKind::Equal, {{ {"==", TokenKind::EqualsEquals} }}, 1 };
-        info[ToUChar('!')]  = { TokenKind::Bang, {{ {"!=" , TokenKind::NotEquals} }}, 1 };
-        info[ToUChar('<')]  = { TokenKind::Less, {{ {"<=" , TokenKind::LessEqual} }}, 1 };
+        info[ToUChar('=')]  = { TokenKind::Equal, {{ {"==", TokenKind::EqualEqual} }}, 1 };
+        info[ToUChar('!')]  = { TokenKind::Bang, {{ {"!=" , TokenKind::NotEqual} }}, 1 };
+        info[ToUChar('<')]  = { TokenKind::Lesser, {{ {"<=" , TokenKind::LesserEqual} }}, 1 };
         info[ToUChar('>')]  = { TokenKind::Greater, {{ {">=" , TokenKind::GreaterEqual} }}, 1 };
 
         return info;

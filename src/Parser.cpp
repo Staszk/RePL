@@ -88,7 +88,7 @@ std::unique_ptr<ASTNode> Parser::ParseEquality()
 {
     std::unique_ptr<ASTNode> node = ParseComparison();
 
-    while (Match({TokenKind::EqualsEquals, TokenKind::NotEquals}))
+    while (Match({TokenKind::EqualEqual, TokenKind::NotEqual}))
     {
         const Token& operatorToken = Peek(-1);
         std::unique_ptr<ASTNode> right = ParseComparison();
@@ -107,7 +107,7 @@ std::unique_ptr<ASTNode> Parser::ParseComparison()
 {
     std::unique_ptr<ASTNode> node = ParseTerm();
 
-    while (Match({TokenKind::LessEqual, TokenKind::GreaterEqual, TokenKind::Less, TokenKind::Greater}))
+    while (Match({TokenKind::LesserEqual, TokenKind::GreaterEqual, TokenKind::Lesser, TokenKind::Greater}))
     {
         const Token& operatorToken = Peek(-1);
         std::unique_ptr<ASTNode> right = ParseTerm();
