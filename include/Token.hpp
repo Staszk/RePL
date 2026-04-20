@@ -13,41 +13,41 @@ constexpr size_t MaxCompoundTokenOptions = 4;
  */
 enum class TokenKind : uint8_t
 {
-    // Special Cases
-    Invalid = 0, End,
+	// Special Cases
+	Invalid = 0, End,
 
-    // Whitespaces
-    Whitespace, NewLine, Tab,
+	// Whitespaces
+	Whitespace, NewLine, Tab,
 
-    // Comments
-    LineComment, BlockComment,
+	// Comments
+	LineComment, BlockComment,
 
-    // Identifiers
-    Identifier,
+	// Identifiers
+	Identifier,
 
-    // Literals
-    KeywordLiteral, IntLiteral, FloatLiteral, HalfFloatLiteral, StringLiteral, CharLiteral,
+	// Literals
+	KeywordLiteral, IntLiteral, FloatLiteral, HalfFloatLiteral, StringLiteral, CharLiteral,
 
-    // Preprocessor
-    Preprocessor,
+	// Preprocessor
+	Preprocessor,
 
-    // Multi-Character Literals
-    /// Compound Operators
-    PlusEqual, MinusEqual, Increment, Decrement, AsteriskEqual, SlashEqual, PercentEqual,
-    EqualEqual, NotEqual, LogicalAnd, LogicalOr,
-    LesserEqual, GreaterEqual,
-    Arrow,
+	// Multi-Character Literals
+	/// Compound Operators
+	PlusEqual, MinusEqual, Increment, Decrement, AsteriskEqual, SlashEqual, PercentEqual,
+	EqualEqual, NotEqual, LogicalAnd, LogicalOr,
+	LesserEqual, GreaterEqual,
+	Arrow,
 
-    // Single Character Literals
-    /// Operators
-    Plus, Minus, Asterisk, Slash, Percent,
-    Ampersand, Pipe, Caret, Tilde, Bang, Equal, Question,
-    Lesser, Greater,
-    /// Delimiters
-    Semicolon, Colon, Comma, Period,
-    /// Scopes and Grouping
-    OpenParen, CloseParen, OpenCurly, CloseCurly,
-    OpenBracket, CloseBracket,
+	// Single Character Literals
+	/// Operators
+	Plus, Minus, Asterisk, Slash, Percent,
+	Ampersand, Pipe, Caret, Tilde, Bang, Equal, Question,
+	Lesser, Greater,
+	/// Delimiters
+	Semicolon, Colon, Comma, Period,
+	/// Scopes and Grouping
+	OpenParen, CloseParen, OpenCurly, CloseCurly,
+	OpenBracket, CloseBracket,
 };
 
 /**
@@ -55,21 +55,21 @@ enum class TokenKind : uint8_t
  */
 struct TokenLocation
 {
-    size_t Line;
-    size_t Col;
+	size_t Line;
+	size_t Col;
 };
 
 struct TokenLiteral
 {
-    std::string_view Text;
-    TokenKind Kind;
+	std::string_view Text;
+	TokenKind Kind;
 };
 
 struct TokenLiteralInfo
 {
-    TokenKind Single;
-    std::array<TokenLiteral, MaxCompoundTokenOptions> CompoundOptions;
-    size_t CompoundCount;
+	TokenKind Single;
+	std::array<TokenLiteral, MaxCompoundTokenOptions> CompoundOptions;
+	size_t CompoundCount;
 };
 
 /**
@@ -77,16 +77,16 @@ struct TokenLiteralInfo
  */
 struct Token
 {
-    TokenKind Kind;
-    TokenLocation Loc;
-    std::string_view Value;
+	TokenKind Kind;
+	TokenLocation Loc;
+	std::string_view Value;
 };
 
 namespace TokenHelpers
 {
-    std::string LocationToText(const TokenLocation& loc);
-    constexpr std::string_view TokenKindToText(TokenKind aKind);
-    std::string_view TokenValueToText(const std::string_view arView);
-    std::string TokenToText(const Token& aToken);
+	std::string LocationToText(const TokenLocation& loc);
+	constexpr std::string_view TokenKindToText(TokenKind aKind);
+	std::string_view TokenValueToText(const std::string_view arView);
+	std::string TokenToText(const Token& aToken);
 }
 #endif // REPL_TOKEN_H

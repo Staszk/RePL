@@ -9,9 +9,9 @@
  * @param arTokens The token stream to parse.
  */
 Parser::Parser(const std::vector<Token>& arTokens)
-    : Tokens(arTokens), TokenCount(arTokens.size())
+	: Tokens(arTokens), TokenCount(arTokens.size())
 {
-    Parse();
+	Parse();
 }
 
 /**
@@ -20,19 +20,19 @@ Parser::Parser(const std::vector<Token>& arTokens)
  */
 void Parser::Parse() 
 {
-    try
-    {
-        Root = ParseExpression();
-        ASTPrinter printer;
-    }
-    catch(const ParserError& e)
-    {
-        std::cout << std::format("Parser Error: {} at {}\n", e.Message, TokenHelpers::LocationToText(e.Loc));
-    }
-    catch(const std::exception& e)
-    {
-        std::cout << std::format("Uncaptured Parser Exception: {}\n", e.what());
-    }
+	try
+	{
+		Root = ParseExpression();
+		ASTPrinter printer;
+	}
+	catch(const ParserError& e)
+	{
+		std::cout << std::format("Parser Error: {} at {}\n", e.Message, TokenHelpers::LocationToText(e.Loc));
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << std::format("Uncaptured Parser Exception: {}\n", e.what());
+	}
 }
 
 /**
@@ -43,13 +43,13 @@ void Parser::Parse()
  */
 const Token& Parser::Peek(std::ptrdiff_t aOffset /* = 0 */) const 
 {
-    assert(Cursor + aOffset >= 0 && "Peek value cannot be negative");
+	assert(Cursor + aOffset >= 0 && "Peek value cannot be negative");
 
-    if (Cursor + aOffset < TokenCount) 
-    {
-        return Tokens[Cursor + aOffset];
-    }
-    return Tokens.back();
+	if (Cursor + aOffset < TokenCount) 
+	{
+		return Tokens[Cursor + aOffset];
+	}
+	return Tokens.back();
 }
 
 /**
@@ -57,16 +57,16 @@ const Token& Parser::Peek(std::ptrdiff_t aOffset /* = 0 */) const
  */
 void Parser::Synchronize()
 {
-    Advance();
-    while (CursorValid())
-    {
-        if (Peek(-1).Kind == TokenKind::Semicolon || Peek().Kind == TokenKind::KeywordLiteral)
-        {
-            return;
-        }
+	Advance();
+	while (CursorValid())
+	{
+		if (Peek(-1).Kind == TokenKind::Semicolon || Peek().Kind == TokenKind::KeywordLiteral)
+		{
+			return;
+		}
 
-        Advance();
-    }
+		Advance();
+	}
 }
 
 /**
@@ -76,7 +76,7 @@ void Parser::Synchronize()
  */
 std::unique_ptr<ASTNode> Parser::ParseExpression()
 {
-    return ParseEquality();
+	return ParseEquality();
 }
 
 /**
@@ -86,16 +86,16 @@ std::unique_ptr<ASTNode> Parser::ParseExpression()
  */
 std::unique_ptr<ASTNode> Parser::ParseEquality()
 {
-    std::unique_ptr<ASTNode> node = ParseComparison();
+	std::unique_ptr<ASTNode> node = ParseComparison();
 
-    while (Match({TokenKind::EqualEqual, TokenKind::NotEqual}))
-    {
-        const Token& operatorToken = Peek(-1);
-        std::unique_ptr<ASTNode> right = ParseComparison();
-        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
-    }
+	while (Match({TokenKind::EqualEqual, TokenKind::NotEqual}))
+	{
+		const Token& operatorToken = Peek(-1);
+		std::unique_ptr<ASTNode> right = ParseComparison();
+		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+	}
 
-    return node;
+	return node;
 }
 
 /**
@@ -105,16 +105,16 @@ std::unique_ptr<ASTNode> Parser::ParseEquality()
  */
 std::unique_ptr<ASTNode> Parser::ParseComparison()
 {
-    std::unique_ptr<ASTNode> node = ParseTerm();
+	std::unique_ptr<ASTNode> node = ParseTerm();
 
-    while (Match({TokenKind::LesserEqual, TokenKind::GreaterEqual, TokenKind::Lesser, TokenKind::Greater}))
-    {
-        const Token& operatorToken = Peek(-1);
-        std::unique_ptr<ASTNode> right = ParseTerm();
-        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
-    }
+	while (Match({TokenKind::LesserEqual, TokenKind::GreaterEqual, TokenKind::Lesser, TokenKind::Greater}))
+	{
+		const Token& operatorToken = Peek(-1);
+		std::unique_ptr<ASTNode> right = ParseTerm();
+		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+	}
 
-    return node;
+	return node;
 }
 
 /**
@@ -124,16 +124,16 @@ std::unique_ptr<ASTNode> Parser::ParseComparison()
  */
 std::unique_ptr<ASTNode> Parser::ParseTerm()
 {
-    std::unique_ptr<ASTNode> node = ParseFactor();
+	std::unique_ptr<ASTNode> node = ParseFactor();
 
-    while (Match({TokenKind::Plus, TokenKind::Minus}))
-    {
-        const Token& operatorToken = Peek(-1);
-        std::unique_ptr<ASTNode> right = ParseFactor();
-        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
-    }
+	while (Match({TokenKind::Plus, TokenKind::Minus}))
+	{
+		const Token& operatorToken = Peek(-1);
+		std::unique_ptr<ASTNode> right = ParseFactor();
+		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+	}
 
-    return node;
+	return node;
 }
 
 /**
@@ -143,16 +143,16 @@ std::unique_ptr<ASTNode> Parser::ParseTerm()
  */
 std::unique_ptr<ASTNode> Parser::ParseFactor()
 {
-    std::unique_ptr<ASTNode> node = ParseUnary();
+	std::unique_ptr<ASTNode> node = ParseUnary();
 
-    while (Match({TokenKind::Asterisk, TokenKind::Slash, TokenKind::Percent}))
-    {
-        const Token& operatorToken = Peek(-1);
-        std::unique_ptr<ASTNode> right = ParseUnary();
-        node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
-    }
+	while (Match({TokenKind::Asterisk, TokenKind::Slash, TokenKind::Percent}))
+	{
+		const Token& operatorToken = Peek(-1);
+		std::unique_ptr<ASTNode> right = ParseUnary();
+		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
+	}
 
-    return node;
+	return node;
 }
 
 /**
@@ -162,14 +162,14 @@ std::unique_ptr<ASTNode> Parser::ParseFactor()
  */
 std::unique_ptr<ASTNode> Parser::ParseUnary()
 {
-    if (Match({TokenKind::Bang, TokenKind::Minus}))
-    {
-        const Token& operatorToken = Peek(-1);
-        std::unique_ptr<ASTNode> operand = ParseUnary();
-        return std::make_unique<UnaryExprNode>(operatorToken, std::move(operand));
-    }
+	if (Match({TokenKind::Bang, TokenKind::Minus}))
+	{
+		const Token& operatorToken = Peek(-1);
+		std::unique_ptr<ASTNode> operand = ParseUnary();
+		return std::make_unique<UnaryExprNode>(operatorToken, std::move(operand));
+	}
 
-    return ParsePrimary();
+	return ParsePrimary();
 }
 
 /**
@@ -179,39 +179,39 @@ std::unique_ptr<ASTNode> Parser::ParseUnary()
  */
 std::unique_ptr<ASTNode> Parser::ParsePrimary()
 {
-    if (Match({TokenKind::IntLiteral}))
-    {
-        const Token& intToken = Peek(-1);
-        return std::make_unique<IntLiteralExprNode>(intToken);
-    }
-    else if (Match({TokenKind::FloatLiteral}))
-    {
-        const Token& floatToken = Peek(-1);
-        return std::make_unique<FloatLiteralExprNode>(floatToken);
-    }
-    else if (Match({TokenKind::StringLiteral}))
-    {
-        const Token& stringToken = Peek(-1);
-        return std::make_unique<StringLiteralExprNode>(stringToken);
-    }
-    else if (Match({TokenKind::Identifier}))
-    {
-        const Token& identifierToken = Peek(-1);
-        return std::make_unique<IdentifierExprNode>(identifierToken);
-    }
-    else if (Match({TokenKind::KeywordLiteral}))
-    {
-        const Token& keywordToken = Peek(-1);
-        return std::make_unique<KeywordLiteralExprNode>(keywordToken);
-    }
-    else if (Match({TokenKind::OpenParen}))
-    {
-        std::unique_ptr<ASTNode> expr = ParseExpression();
-        Consume(TokenKind::CloseParen, "Expected ')' after expression");
-        return std::make_unique<GroupingExprNode>(std::move(expr));
-    }
+	if (Match({TokenKind::IntLiteral}))
+	{
+		const Token& intToken = Peek(-1);
+		return std::make_unique<IntLiteralExprNode>(intToken);
+	}
+	else if (Match({TokenKind::FloatLiteral}))
+	{
+		const Token& floatToken = Peek(-1);
+		return std::make_unique<FloatLiteralExprNode>(floatToken);
+	}
+	else if (Match({TokenKind::StringLiteral}))
+	{
+		const Token& stringToken = Peek(-1);
+		return std::make_unique<StringLiteralExprNode>(stringToken);
+	}
+	else if (Match({TokenKind::Identifier}))
+	{
+		const Token& identifierToken = Peek(-1);
+		return std::make_unique<IdentifierExprNode>(identifierToken);
+	}
+	else if (Match({TokenKind::KeywordLiteral}))
+	{
+		const Token& keywordToken = Peek(-1);
+		return std::make_unique<KeywordLiteralExprNode>(keywordToken);
+	}
+	else if (Match({TokenKind::OpenParen}))
+	{
+		std::unique_ptr<ASTNode> expr = ParseExpression();
+		Consume(TokenKind::CloseParen, "Expected ')' after expression");
+		return std::make_unique<GroupingExprNode>(std::move(expr));
+	}
 
-    throw GenerateError("Expected expression", Peek().Loc);
+	throw GenerateError("Expected expression", Peek().Loc);
 }
 
 /**
@@ -221,17 +221,17 @@ std::unique_ptr<ASTNode> Parser::ParsePrimary()
  */
 const Token& Parser::Advance() 
 {
-    if (Tokens.empty()) 
-    {
-        throw GenerateError("Parser has no tokens to advance", TokenLocation{0, 0});
-    }
+	if (Tokens.empty()) 
+	{
+		throw GenerateError("Parser has no tokens to advance", TokenLocation{0, 0});
+	}
 
-    if (CursorValid()) 
-    {
-        return Tokens[Cursor++];
-    }
+	if (CursorValid()) 
+	{
+		return Tokens[Cursor++];
+	}
 
-    return Tokens.back();
+	return Tokens.back();
 }
 
 /**
@@ -243,8 +243,8 @@ const Token& Parser::Advance()
  */
 const ParserError& Parser::GenerateError(const std::string_view message, const TokenLocation &loc)
 {
-    Errors.emplace_back( message, loc );
-    return Errors.back();
+	Errors.emplace_back( message, loc );
+	return Errors.back();
 }
 
 /**
@@ -255,11 +255,11 @@ const ParserError& Parser::GenerateError(const std::string_view message, const T
  */
 bool Parser::Check(TokenKind akind) const 
 {
-    if (!CursorValid()) 
-    {
-        return false;
-    }
-    return Tokens[Cursor].Kind == akind;
+	if (!CursorValid()) 
+	{
+		return false;
+	}
+	return Tokens[Cursor].Kind == akind;
 }
 
 /**
@@ -270,15 +270,15 @@ bool Parser::Check(TokenKind akind) const
  */
 bool Parser::Match(std::initializer_list<TokenKind> aKinds) 
 {
-    for (TokenKind akind : aKinds)
-    {
-        if (Check(akind)) 
-        {
-            Advance();
-            return true;
-        }
-    }
-    return false;
+	for (TokenKind akind : aKinds)
+	{
+		if (Check(akind)) 
+		{
+			Advance();
+			return true;
+		}
+	}
+	return false;
 }
 
 /**
@@ -290,10 +290,10 @@ bool Parser::Match(std::initializer_list<TokenKind> aKinds)
  */
 const Token& Parser::Consume(TokenKind akind, std::string_view message) 
 {
-    if (Check(akind)) 
-    {
-        return Advance();
-    }
+	if (Check(akind)) 
+	{
+		return Advance();
+	}
 
-    throw GenerateError(message, Peek().Loc);
+	throw GenerateError(message, Peek().Loc);
 }

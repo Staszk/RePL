@@ -6,12 +6,12 @@
 class REPL final
 {
 public:
-    static void Run();
+	static void Run();
 
 private:
-    static void PrintHelp();
-    static void ClearConsole();
-    static void HandleInput(const std::string_view input);
+	static void PrintHelp();
+	static void ClearConsole();
+	static void HandleInput(const std::string_view input);
 };
 
 #endif // REPL_REPL_HPP

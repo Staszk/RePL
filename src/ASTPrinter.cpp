@@ -11,7 +11,7 @@
  */
 std::string ASTPrinter::Print(const class ASTNode&)
 {
-    return "";
+	return "";
 }
 
 /**
@@ -22,7 +22,7 @@ std::string ASTPrinter::Print(const class ASTNode&)
  */
 std::string ASTPrinter::Print(const class ExprNode&)
 {
-    return "";
+	return "";
 }
 
 /**
@@ -33,7 +33,7 @@ std::string ASTPrinter::Print(const class ExprNode&)
  */
 std::string ASTPrinter::Print(const class KeywordLiteralExprNode& arNode)
 {
-    return std::string(arNode.ValueToken.Value);
+	return std::string(arNode.ValueToken.Value);
 }
 
 /**
@@ -44,7 +44,7 @@ std::string ASTPrinter::Print(const class KeywordLiteralExprNode& arNode)
  */
 std::string ASTPrinter::Print(const class IntLiteralExprNode& arNode)
 {
-    return std::string(arNode.ValueToken.Value);
+	return std::string(arNode.ValueToken.Value);
 }
 
 /**
@@ -55,7 +55,7 @@ std::string ASTPrinter::Print(const class IntLiteralExprNode& arNode)
  */
 std::string ASTPrinter::Print(const class FloatLiteralExprNode& arNode)
 {
-    return std::string(arNode.ValueToken.Value);
+	return std::string(arNode.ValueToken.Value);
 }
 
 /**
@@ -66,7 +66,7 @@ std::string ASTPrinter::Print(const class FloatLiteralExprNode& arNode)
  */
 std::string ASTPrinter::Print(const class StringLiteralExprNode& arNode)
 {
-    return std::string(arNode.ValueToken.Value);
+	return std::string(arNode.ValueToken.Value);
 }
 
 /**
@@ -77,7 +77,7 @@ std::string ASTPrinter::Print(const class StringLiteralExprNode& arNode)
  */
 std::string ASTPrinter::Print(const class IdentifierExprNode& arNode)
 {
-    return std::string(arNode.ValueToken.Value);
+	return std::string(arNode.ValueToken.Value);
 }
 
 /**
@@ -88,7 +88,7 @@ std::string ASTPrinter::Print(const class IdentifierExprNode& arNode)
  */
 std::string ASTPrinter::Print(const class BinaryExprNode& arNode)
 {
-    return Parenthesize(arNode.OperatorToken.Value, { arNode.Left.get(), arNode.Right.get() });
+	return Parenthesize(arNode.OperatorToken.Value, { arNode.Left.get(), arNode.Right.get() });
 }
 
 /**
@@ -99,7 +99,7 @@ std::string ASTPrinter::Print(const class BinaryExprNode& arNode)
  */
 std::string ASTPrinter::Print(const class UnaryExprNode& arNode)
 {
-    return Parenthesize(arNode.OperatorToken.Value, { arNode.Operand.get() });
+	return Parenthesize(arNode.OperatorToken.Value, { arNode.Operand.get() });
 }
 
 /**
@@ -110,7 +110,7 @@ std::string ASTPrinter::Print(const class UnaryExprNode& arNode)
  */
 std::string ASTPrinter::Print(const class GroupingExprNode& arNode)
 {
-    return Parenthesize("group", { arNode.Inner.get() });
+	return Parenthesize("group", { arNode.Inner.get() });
 }
 
 /**
@@ -122,13 +122,13 @@ std::string ASTPrinter::Print(const class GroupingExprNode& arNode)
  */
 std::string ASTPrinter::Parenthesize(const std::string_view aName, std::initializer_list<const ASTNode*> aChildren)
 {
-    std::ostringstream result;
-    result << "(" << aName;
-    for (const ASTNode* child : aChildren)
-    {
-        result << " ";
-        result << child->Accept(this);
-    }
-    result << ")";
-    return result.str();
+	std::ostringstream result;
+	result << "(" << aName;
+	for (const ASTNode* child : aChildren)
+	{
+	    result << " ";
+	    result << child->Accept(this);
+	}
+	result << ")";
+	return result.str();
 }

@@ -7,280 +7,280 @@
 
 namespace 
 {
-    template<typename T>
-    concept Numeric = std::is_arithmetic_v<T> && !std::is_same_v<T, bool>;
+	template<typename T>
+	concept Numeric = std::is_arithmetic_v<T> && !std::is_same_v<T, bool>;
 
-    static constexpr auto PlusOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
-        []<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left + right); },
-        [](const std::string& left, const std::string& right) { return InterpreterValue(std::string(left + right)); },
-        [](auto, auto) { return InterpreterValue(std::monostate{}); }
-    };
+	static constexpr auto PlusOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
+		[]<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left + right); },
+		[](const std::string& left, const std::string& right) { return InterpreterValue(std::string(left + right)); },
+		[](auto, auto) { return InterpreterValue(std::monostate{}); }
+	};
 
-    static constexpr auto MinusOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
-        []<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left - right); },
-        [](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
-        [](auto, auto) { return InterpreterValue(std::monostate{}); }
-    };
+	static constexpr auto MinusOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
+		[]<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left - right); },
+		[](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
+		[](auto, auto) { return InterpreterValue(std::monostate{}); }
+	};
 
-    static constexpr auto MultiplyOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
-        []<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left * right); },
-        [](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
-        [](auto, auto) { return InterpreterValue(std::monostate{}); }
-    };
+	static constexpr auto MultiplyOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
+		[]<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left * right); },
+		[](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
+		[](auto, auto) { return InterpreterValue(std::monostate{}); }
+	};
 
-    static constexpr auto DivideOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
-        []<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left / right); },
-        [](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
-        [](auto, auto) { return InterpreterValue(std::monostate{}); }
-    };
+	static constexpr auto DivideOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
+		[]<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left / right); },
+		[](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
+		[](auto, auto) { return InterpreterValue(std::monostate{}); }
+	};
 
-    static constexpr auto GreaterOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return false; },
-        []<Numeric T, Numeric U>(T left, U right) { return left > right; },
-        [](const std::string& left, const std::string& right) { return left > right; },
-        [](auto, auto) { return false; }
-    };
+	static constexpr auto GreaterOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return false; },
+		[]<Numeric T, Numeric U>(T left, U right) { return left > right; },
+		[](const std::string& left, const std::string& right) { return left > right; },
+		[](auto, auto) { return false; }
+	};
 
-    static constexpr auto GreaterEqualOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return false; },
-        []<Numeric T, Numeric U>(T left, U right) { return left >= right; },
-        [](const std::string& left, const std::string& right) { return left >= right; },
-        [](auto, auto) { return false; }
-    };
+	static constexpr auto GreaterEqualOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return false; },
+		[]<Numeric T, Numeric U>(T left, U right) { return left >= right; },
+		[](const std::string& left, const std::string& right) { return left >= right; },
+		[](auto, auto) { return false; }
+	};
 
-    static constexpr auto LesserOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return false; },
-        []<Numeric T, Numeric U>(T left, U right) { return left < right; },
-        [](const std::string& left, const std::string& right) { return left < right; },
-        [](auto, auto) { return false; }
-    };
+	static constexpr auto LesserOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return false; },
+		[]<Numeric T, Numeric U>(T left, U right) { return left < right; },
+		[](const std::string& left, const std::string& right) { return left < right; },
+		[](auto, auto) { return false; }
+	};
 
-    static constexpr auto LesserEqualOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return false; },
-        []<Numeric T, Numeric U>(T left, U right) { return left <= right; },
-        [](const std::string& left, const std::string& right) { return left <= right; },
-        [](auto, auto) { return false; }
-    };
+	static constexpr auto LesserEqualOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return false; },
+		[]<Numeric T, Numeric U>(T left, U right) { return left <= right; },
+		[](const std::string& left, const std::string& right) { return left <= right; },
+		[](auto, auto) { return false; }
+	};
 
-    static constexpr auto EqualEqualOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return true; },
-        []<typename T>(const T& left, const T& right) { return left == right; },
-        []<Numeric T, Numeric U>(T left, U right) { return left == right; },
-        []<Numeric T>(T left, bool right) { return static_cast<bool>(left) == right; },
-        []<Numeric T>(bool left, T right) { return left == static_cast<bool>(right); },
-        [](bool left, const std::string& right) 
-        {
-            if (right == "true") return left == true;
-            if (right == "false") return left == false;
-            return false;
-        },
-        [](const std::string& left, bool right) 
-        {
-            if (left == "true") return right == true;
-            if (left == "false") return right == false;
-            return false;
-        },
-        []<Numeric T>(const std::string& left, T right) 
-        {
-            T value;
-            std::errc ec{};
-            if (left == "true") value = T{1};
-            else if (left == "false") value = T{0};
-            else
-            {
-                auto [ptr, ec] = std::from_chars(left.data(), left.data() + left.size(), value);
-            }
-            return ec == std::errc() ? value == right : true;
-        },
-        []<Numeric T>(T left, const std::string& right) 
-        {
-            T value;
-            std::errc ec{};
-            if (right == "true") value = T{1};
-            else if (right == "false") value = T{0};
-            else
-            {
-                auto [ptr, ec] = std::from_chars(right.data(), right.data() + right.size(), value);
-            }
-            return ec == std::errc() ? value == left : true;
-        },
-        []<typename T, typename U>(const T&, const U&) requires (!Numeric<T> || !Numeric<U>) { return false; }
-    };
+	static constexpr auto EqualEqualOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return true; },
+		[]<typename T>(const T& left, const T& right) { return left == right; },
+		[]<Numeric T, Numeric U>(T left, U right) { return left == right; },
+		[]<Numeric T>(T left, bool right) { return static_cast<bool>(left) == right; },
+		[]<Numeric T>(bool left, T right) { return left == static_cast<bool>(right); },
+		[](bool left, const std::string& right) 
+		{
+			if (right == "true") return left == true;
+			if (right == "false") return left == false;
+			return false;
+		},
+		[](const std::string& left, bool right) 
+		{
+			if (left == "true") return right == true;
+			if (left == "false") return right == false;
+			return false;
+		},
+		[]<Numeric T>(const std::string& left, T right) 
+		{
+			T value;
+			std::errc ec{};
+			if (left == "true") value = T{1};
+			else if (left == "false") value = T{0};
+			else
+			{
+				auto [ptr, ec] = std::from_chars(left.data(), left.data() + left.size(), value);
+			}
+			return ec == std::errc() ? value == right : true;
+		},
+		[]<Numeric T>(T left, const std::string& right) 
+		{
+			T value;
+			std::errc ec{};
+			if (right == "true") value = T{1};
+			else if (right == "false") value = T{0};
+			else
+			{
+				auto [ptr, ec] = std::from_chars(right.data(), right.data() + right.size(), value);
+			}
+			return ec == std::errc() ? value == left : true;
+		},
+		[]<typename T, typename U>(const T& left, const U& right) requires (!Numeric<T> || !Numeric<U>) { return false; }
+	};
 
-    static constexpr auto NotEqualOp = overloaded
-    {
-        [](std::monostate, std::monostate) { return false; },
-        []<typename T>(const T& left, const T& right) { return left != right; },
-        []<Numeric T, Numeric U>(T left, U right) -> bool { return left != right; },
-        [](bool left, const std::string& right) 
-        {
-            if (right == "true") return left != true;
-            if (right == "false") return left != false;
-            return false;
-        },
-        [](const std::string& left, bool right) 
-        {
-            if (left == "true") return right != true;
-            if (left == "false") return right != false;
-            return false;
-        },
-        []<Numeric T>(const std::string& left, T right) 
-        {
-            T value;
-            std::errc ec{};
-            if (left == "true") value = T{1};
-            else if (left == "false") value = T{0};
-            else
-            {
-                auto [ptr, ec] = std::from_chars(left.data(), left.data() + left.size(), value);
-            }
-            return ec == std::errc() ? value != right : true;
-        },
-        []<Numeric T>(T left, const std::string& right) 
-        {
-            T value;
-            std::errc ec{};
-            if (right == "true") value = T{1};
-            else if (right == "false") value = T{0};
-            else
-            {
-                auto [ptr, ec] = std::from_chars(right.data(), right.data() + right.size(), value);
-            }
-            return ec == std::errc() ? value != left : true;
-        },
-        []<typename T, typename U>(const T&, const U&) requires (!Numeric<T> || !Numeric<U>) { return true; }
-    };
+	static constexpr auto NotEqualOp = overloaded
+	{
+		[](std::monostate, std::monostate) { return false; },
+		[]<typename T>(const T& left, const T& right) { return left != right; },
+		[]<Numeric T, Numeric U>(T left, U right) -> bool { return left != right; },
+		[](bool left, const std::string& right) 
+		{
+			if (right == "true") return left != true;
+			if (right == "false") return left != false;
+			return false;
+		},
+		[](const std::string& left, bool right) 
+		{
+			if (left == "true") return right != true;
+			if (left == "false") return right != false;
+			return false;
+		},
+		[]<Numeric T>(const std::string& left, T right) 
+		{
+			T value;
+			std::errc ec{};
+			if (left == "true") value = T{1};
+			else if (left == "false") value = T{0};
+			else
+			{
+				auto [ptr, ec] = std::from_chars(left.data(), left.data() + left.size(), value);
+			}
+			return ec == std::errc() ? value != right : true;
+		},
+		[]<Numeric T>(T left, const std::string& right) 
+		{
+			T value;
+			std::errc ec{};
+			if (right == "true") value = T{1};
+			else if (right == "false") value = T{0};
+			else
+			{
+				auto [ptr, ec] = std::from_chars(right.data(), right.data() + right.size(), value);
+			}
+			return ec == std::errc() ? value != left : true;
+		},
+		[]<typename T, typename U>(const T&, const U&) requires (!Numeric<T> || !Numeric<U>) { return true; }
+	};
 
-    static constexpr auto NegateOp = overloaded
-    {
-        [](std::monostate) { return InterpreterValue(std::monostate{}); },
-        []<Numeric T>(T numericValue ) { return InterpreterValue(-numericValue); },
-        [](const std::string&) { return InterpreterValue(std::monostate{}); },
-        [](bool boolValue) { return InterpreterValue(-static_cast<int8_t>(boolValue)); },
-        [](nullptr_t) { return InterpreterValue(std::monostate{}); }
-    };
+	static constexpr auto NegateOp = overloaded
+	{
+		[](std::monostate) { return InterpreterValue(std::monostate{}); },
+		[]<Numeric T>(T numericValue ) { return InterpreterValue(-numericValue); },
+		[](const std::string&) { return InterpreterValue(std::monostate{}); },
+		[](bool boolValue) { return InterpreterValue(-static_cast<int8_t>(boolValue)); },
+		[](nullptr_t) { return InterpreterValue(std::monostate{}); }
+	};
 
-    static constexpr auto TruthOp = overloaded
-    {
-        [](std::monostate) { return false; },
-        [](int64_t intValue) { return intValue != 0; },
-        [](float floatValue) { return floatValue != 0.0; },
-        [](const std::string& stringValue) { return !stringValue.empty(); },
-        [](bool boolValue) { return boolValue; },
-        [](nullptr_t) { return false; }
-    };
+	static constexpr auto TruthOp = overloaded
+	{
+		[](std::monostate) { return false; },
+		[](int64_t intValue) { return intValue != 0; },
+		[](float floatValue) { return floatValue != 0.0; },
+		[](const std::string& stringValue) { return !stringValue.empty(); },
+		[](bool boolValue) { return boolValue; },
+		[](nullptr_t) { return false; }
+	};
 
 }
 
 InterpreterValue Interpreter::Interpret(const ASTNode &node)
 {
-    return InterpreterValue();
+	return InterpreterValue();
 }
 
 InterpreterValue Interpreter::Interpret(const ExprNode &node)
 {
-    return InterpreterValue();
+	return InterpreterValue();
 }
 
 InterpreterValue Interpreter::Interpret(const KeywordLiteralExprNode &node)
 {
-    return std::string(node.ValueToken.Value);
+	return std::string(node.ValueToken.Value);
 }
 
 InterpreterValue Interpreter::Interpret(const IntLiteralExprNode &node)
 {
-    int64_t intValue;
-    std::from_chars(node.ValueToken.Value.data(), node.ValueToken.Value.data() + node.ValueToken.Value.size(), intValue);
-    return intValue;
+	int64_t intValue;
+	std::from_chars(node.ValueToken.Value.data(), node.ValueToken.Value.data() + node.ValueToken.Value.size(), intValue);
+	return intValue;
 }
 
 InterpreterValue Interpreter::Interpret(const FloatLiteralExprNode &node)
 {
-    float floatValue;
-    std::from_chars(node.ValueToken.Value.data(), node.ValueToken.Value.data() + node.ValueToken.Value.size(), floatValue);
-    return floatValue;
+	float floatValue;
+	std::from_chars(node.ValueToken.Value.data(), node.ValueToken.Value.data() + node.ValueToken.Value.size(), floatValue);
+	return floatValue;
 }
 
 InterpreterValue Interpreter::Interpret(const StringLiteralExprNode &node)
 {
-    std::string stringValue(node.ValueToken.Value);
-    // Remove the surrounding quotes from the string literal
-    if (!stringValue.empty() && stringValue.front() == '\"' && stringValue.back() == '\"')
-    {
-        stringValue = stringValue.substr(1, stringValue.size() - 2);
-    }
-    return stringValue;
+	std::string stringValue(node.ValueToken.Value);
+	// Remove the surrounding quotes from the string literal
+	if (!stringValue.empty() && stringValue.front() == '\"' && stringValue.back() == '\"')
+	{
+		stringValue = stringValue.substr(1, stringValue.size() - 2);
+	}
+	return stringValue;
 }
 
 InterpreterValue Interpreter::Interpret(const IdentifierExprNode &node)
 {
-    return std::string(node.ValueToken.Value);
+	return std::string(node.ValueToken.Value);
 }
 
 InterpreterValue Interpreter::Interpret(const BinaryExprNode &node)
 {
-    InterpreterValue leftValue = node.Left->Accept(*this);
-    InterpreterValue rightValue = node.Right->Accept(*this);
+	InterpreterValue leftValue = node.Left->Accept(*this);
+	InterpreterValue rightValue = node.Right->Accept(*this);
 
-    switch (node.OperatorToken.Kind)
-    {
-        using enum TokenKind;
-    case Plus:
-        return std::visit(PlusOp, leftValue, rightValue);
-    case Minus:
-        return std::visit(MinusOp, leftValue, rightValue);
-    case Asterisk:
-        return std::visit(MultiplyOp, leftValue, rightValue);
-    case Slash:
-        return std::visit(DivideOp, leftValue, rightValue);
-    case Greater:
-        return std::visit(GreaterOp, leftValue, rightValue);
-    case GreaterEqual:
-        return std::visit(GreaterEqualOp, leftValue, rightValue);
-    case Lesser:
-        return std::visit(LesserOp, leftValue, rightValue);
-    case LesserEqual:
-        return std::visit(LesserEqualOp, leftValue, rightValue);
-    case EqualEqual:
-        return std::visit(EqualEqualOp, leftValue, rightValue);
-    case NotEqual:
-        return std::visit(NotEqualOp, leftValue, rightValue);
-        break;
-    }
+	switch (node.OperatorToken.Kind)
+	{
+		using enum TokenKind;
+	case Plus:
+		return std::visit(PlusOp, leftValue, rightValue);
+	case Minus:
+		return std::visit(MinusOp, leftValue, rightValue);
+	case Asterisk:
+		return std::visit(MultiplyOp, leftValue, rightValue);
+	case Slash:
+		return std::visit(DivideOp, leftValue, rightValue);
+	case Greater:
+		return std::visit(GreaterOp, leftValue, rightValue);
+	case GreaterEqual:
+		return std::visit(GreaterEqualOp, leftValue, rightValue);
+	case Lesser:
+		return std::visit(LesserOp, leftValue, rightValue);
+	case LesserEqual:
+		return std::visit(LesserEqualOp, leftValue, rightValue);
+	case EqualEqual:
+		return std::visit(EqualEqualOp, leftValue, rightValue);
+	case NotEqual:
+		return std::visit(NotEqualOp, leftValue, rightValue);
+		break;
+	}
 
-    return InterpreterValue();
+	return InterpreterValue();
 }
 
 InterpreterValue Interpreter::Interpret(const UnaryExprNode &node)
 {
-    InterpreterValue operandValue = node.Operand->Accept(*this);
+	InterpreterValue operandValue = node.Operand->Accept(*this);
 
-    switch (node.OperatorToken.Kind)
-    {
-        using enum TokenKind;
-    case Minus:
-        return std::visit(NegateOp, operandValue);
-    case Bang:
-        return !std::visit(TruthOp, operandValue);
-    }
+	switch (node.OperatorToken.Kind)
+	{
+		using enum TokenKind;
+	case Minus:
+		return std::visit(NegateOp, operandValue);
+	case Bang:
+		return !std::visit(TruthOp, operandValue);
+	}
 
-    return InterpreterValue();
+	return InterpreterValue();
 }
 
 InterpreterValue Interpreter::Interpret(const GroupingExprNode &node)
 {
-    return node.Inner->Accept(*this);
+	return node.Inner->Accept(*this);
 }

@@ -1,75 +1,75 @@
 expression          ->  equality
-                    |   comparison
-                    |   term
-                    |   factor
-                    |   unary
-                    |   primary
-                    ;
+					|   comparison
+					|   term
+					|   factor
+					|   unary
+					|   primary
+					;
 
 equality            ->  comparison ( ( "!=" | "==" ) comparison )*
-                    |   term
-                    |   factor
-                    |   unary
-                    |   primary
-                    ;
+					|   term
+					|   factor
+					|   unary
+					|   primary
+					;
 
 comparison          ->  term ( ( ">" | ">=" | "<" | "<=" ) term )*
-                    |   factor
-                    |   unary
-                    |   primary
-                    ;
+					|   factor
+					|   unary
+					|   primary
+					;
 
 term                ->  factor ( ( "-" | "+" ) factor )*
-                    |   unary
-                    |   primary
-                    ;
+					|   unary
+					|   primary
+					;
 
 factor              ->  unary ( ( "/" | "*" ) unary )*
-                    |   primary
-                    ;
+					|   primary
+					;
 
 unary               ->  ( "!" | "-" | "--" | "++" ) unary
-                    |   primary
-                    ;
+					|   primary
+					;
 
 primary             ->  literal
-                    |   "(" expression ")"
-                    ;
+					|   "(" expression ")"
+					;
 
 literal             ->  keywordLiteral
-                    |   intLiteral
-                    |   floatLiteral
-                    |   halfFloatLiteral
-                    |   stringLiteral
-                    |   charLiteral
-                    ;
+					|   intLiteral
+					|   floatLiteral
+					|   halfFloatLiteral
+					|   stringLiteral
+					|   charLiteral
+					;
 
 keywordLiteral      ->  types
-                    |   "break"
-                    |   "continue"
-                    |   "while"   
-                    |   "for"
-                    |   "until"
-                    |   "if"
-                    |   "else"
-                    |   "true"
-                    |   "false"
-                    |   "nil"
-                    ;
+					|   "break"
+					|   "continue"
+					|   "while"   
+					|   "for"
+					|   "until"
+					|   "if"
+					|   "else"
+					|   "true"
+					|   "false"
+					|   "nil"
+					;
 
 types               ->  "u08"   |   "uint08"
-                    |   "u16"   |   "uint16"
-                    |   "u32"   |   "uint32"
-                    |   "u64"   |   "uint64"
-                    |   "i08"   |   "sint08"
-                    |   "i16"   |   "sint16"
-                    |   "i32"   |   "sint32"
-                    |   "i64"   |   "sint64"
-                    |   "f08"   |   "float08"
-                    |   "f16"   |   "float16"
-                    |   "f32"   |   "float32"
-                    |   "f64"   |   "float64"
-                    |   "str"   |   "string"
-                    |   "chr"   |   "char"
-                    |               "struct"
-                    ;
+					|   "u16"   |   "uint16"
+					|   "u32"   |   "uint32"
+					|   "u64"   |   "uint64"
+					|   "i08"   |   "sint08"
+					|   "i16"   |   "sint16"
+					|   "i32"   |   "sint32"
+					|   "i64"   |   "sint64"
+					|   "f08"   |   "float08"
+					|   "f16"   |   "float16"
+					|   "f32"   |   "float32"
+					|   "f64"   |   "float64"
+					|   "str"   |   "string"
+					|   "chr"   |   "char"
+					|               "struct"
+					;
