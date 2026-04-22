@@ -189,7 +189,6 @@ namespace
 
 InterpreterValue Interpreter::Interpret(const std::unique_ptr<ASTNode> &arNodePtr)
 {
-	
 	try
 	{
 		Interpreter interpreter;
