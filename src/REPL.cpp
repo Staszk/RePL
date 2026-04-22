@@ -1,8 +1,9 @@
 #include "REPL.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
-#include "Interpreter.hpp"
 #include <iostream>
+
+Interpreter REPL::_Interpreter{};
 
 namespace
 {
@@ -104,10 +105,13 @@ void REPL::HandleInput( std::string_view input)
 {
 	Lexer lexer(input, false);
 	Parser parser(lexer.tokens());
-	const auto& root = parser.GetRoot();
+	const std::unique_ptr<ASTNode>& root = parser.GetRoot();
 	if (root != nullptr)
 	{
-		InterpreterValue value = Interpreter::Interpret(root);
-		std::cout << std::visit(Interpreter::Printer, value) << '\n';
+		auto [value, success] = _Interpreter.BeginInterpret(root);
+		if (success)
+		{
+			std::cout << std::visit(Interpreter::Printer, value) << '\n';
+		}
 	}
 }

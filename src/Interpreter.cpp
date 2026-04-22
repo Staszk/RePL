@@ -24,7 +24,17 @@ namespace
 	{
 		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
 		[]<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left - right); },
-		[](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
+		[](const std::string& left, const std::string& right) 
+		{
+			std::string result(left);
+			size_t pos = 0;
+    		if ((pos = result.find(right, pos)) != std::string::npos) 
+			{
+        		result.erase(pos, right.length());
+    		};
+
+			return InterpreterValue(result);
+		},
 		[](auto, auto) { return InterpreterValue(std::monostate{}); }
 	};
 
@@ -33,6 +43,34 @@ namespace
 		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
 		[]<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left * right); },
 		[](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
+		[]<Numeric T>(T left, const std::string& right)
+		{
+			if (left < 0.0) throw Interpreter::GenerateError("Cannot negatively repeat a string.");
+			if (left == 1.0) return InterpreterValue(right);
+
+			std::string result;
+			size_t iterations = static_cast<size_t>(left);
+			result.reserve(right.length() * iterations);
+			for (size_t i{0}; i < iterations; ++i) 
+			{
+				result += right;
+			}
+			return InterpreterValue(result);
+		},
+		[]<Numeric T>(const std::string& left, T right)
+		{
+			if (right < 0.0) throw Interpreter::GenerateError("Cannot negatively repeat a string.");
+			if (right == 1.0) return InterpreterValue(left);
+
+			std::string result;
+			size_t iterations = static_cast<size_t>(right);
+			result.reserve(left.length() * iterations);
+			for (size_t i{0}; i < iterations; ++i) 
+			{
+				result += left;
+			}
+			return InterpreterValue(result);
+		},
 		[](auto, auto) { return InterpreterValue(std::monostate{}); }
 	};
 
@@ -40,7 +78,17 @@ namespace
 	{
 		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
 		[]<Numeric T, Numeric U>(T left, U right) { return InterpreterValue(left / right); },
-		[](const std::string&, const std::string&) { return InterpreterValue(std::monostate{}); },
+		[](const std::string& left, const std::string& right) 
+		{
+			std::string result(left);
+			size_t pos = 0;
+    		while ((pos = result.find(right, pos)) != std::string::npos) 
+			{
+        		result.erase(pos, right.length());
+    		};
+
+			return InterpreterValue(result);
+		},
 		[](auto, auto) { return InterpreterValue(std::monostate{}); }
 	};
 
@@ -187,12 +235,12 @@ namespace
 
 }
 
-InterpreterValue Interpreter::Interpret(const std::unique_ptr<ASTNode> &arNodePtr)
+std::pair<InterpreterValue, bool> Interpreter::BeginInterpret(const std::unique_ptr<ASTNode> &arNodePtr)
 {
 	try
 	{
-		Interpreter interpreter;
-		return arNodePtr->Accept(interpreter);
+		PreviousResult = arNodePtr->Accept(*this);
+		return { PreviousResult, true };
 	}
 	catch(const InterpreterError& e)
 	{
@@ -203,7 +251,7 @@ InterpreterValue Interpreter::Interpret(const std::unique_ptr<ASTNode> &arNodePt
 		std::cerr << e.what() << '\n';
 	}
 
-	return InterpreterValue();
+	return { InterpreterValue(), false };
 }
 
 InterpreterValue Interpreter::Interpret(const ASTNode &node)
@@ -218,6 +266,10 @@ InterpreterValue Interpreter::Interpret(const ExprNode &node)
 
 InterpreterValue Interpreter::Interpret(const KeywordLiteralExprNode &node)
 {
+	if (node.ValueToken.Value == "_")
+	{
+		return PreviousResult;
+	}
 	return std::string(node.ValueToken.Value);
 }
 

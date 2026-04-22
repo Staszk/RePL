@@ -37,8 +37,9 @@ namespace
 		return static_cast<unsigned char>(c);
 	}
 
-	constexpr std::array<std::string_view, 11> KeywordLiterals =
+	constexpr std::array<std::string_view, 12> KeywordLiterals =
 	{
+		"_",
 		"break",
 		"continue",
 		"else",
@@ -46,7 +47,7 @@ namespace
 		"if",
 		"struct",
 		"while",
-		"until"
+		"until",
 		"void",
 		"true",
 		"false",
@@ -58,7 +59,7 @@ namespace
 	 * @param value The string value to check.
 	 * @return True if the value is a keyword, false otherwise.
 	 */
-	constexpr bool IsKeywordLiteral(std::string_view value)
+	bool IsKeywordLiteral(std::string_view value)
 	{
 		return std::find(KeywordLiterals.begin(), KeywordLiterals.end(), value) != KeywordLiterals.end();
 	}
@@ -177,6 +178,10 @@ Lexer::Lexer(std::string_view apText, const bool abEnableMetrics /* = true */)
 		std::cout << "| RePL Lexer Begin at " << std::format("{:%H:%M}", StartTime) << '\n';
 	}
 	Tokenize();
+	if (EnableMetrics)
+	{
+		PrintMetrics();
+	}
 }
 
 /**
@@ -487,6 +492,7 @@ void Lexer::ConsumeIdentifierOrKeywordToken(Token& arToken)
 	}
 
 	arToken.Value = Content.substr(begin, Cursor - begin);
+
 	arToken.Kind = IsKeywordLiteral(arToken.Value) ? TokenKind::KeywordLiteral : TokenKind::Identifier;
 	arToken.Loc = { LineIdx, begin - StartOfLine };
 }

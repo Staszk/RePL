@@ -34,7 +34,7 @@ public:
 		[](nullptr_t) { return std::string("null"); }
 	};
 
-	static InterpreterValue Interpret(const std::unique_ptr<class ASTNode>& arNodePtr);
+	std::pair<InterpreterValue, bool> BeginInterpret(const std::unique_ptr<class ASTNode>& arNodePtr);
 	InterpreterValue Interpret(const class ASTNode& node);
 	InterpreterValue Interpret(const class ExprNode& node);
 	InterpreterValue Interpret(const class KeywordLiteralExprNode& node);
@@ -46,8 +46,9 @@ public:
 	InterpreterValue Interpret(const class UnaryExprNode& node);
 	InterpreterValue Interpret(const class GroupingExprNode& node);
 
-public:
 	static inline InterpreterError GenerateError(const std::string_view aMessage);
+private:
+	InterpreterValue PreviousResult{};
 };
 
 #endif // REPL_INTERPRETER_HPP
