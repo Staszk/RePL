@@ -30,13 +30,15 @@ public:
 	
 private:
 
-	const ParserError& GenerateError(const std::string_view message, const TokenLocation& loc);
+	const ParserError& GenerateError(const std::string_view aMessage, const TokenLocation& arLoc);
 	bool Check(TokenKind type) const;
 	const Token& Consume(TokenKind type, std::string_view message);
 	const Token& Advance();
 	bool Match(std::initializer_list<TokenKind> aKinds);
 	void Parse();
 	const Token& Peek(std::ptrdiff_t aOffset = 0) const;
+	void RequireWhitespace(const std::string_view aMessage, std::ptrdiff_t aPreviousOffset = -1, std::ptrdiff_t aCurrentOffset = 0);
+	const Token& RetrieveBinaryOperator();
 	void Synchronize();
 
 	std::unique_ptr<ASTNode> ParseExpression();

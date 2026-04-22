@@ -3,6 +3,16 @@
 #include <stdexcept>
 #include <iostream>
 
+namespace
+{
+	bool IsAdjacent(const Token& aFirst, const Token& aSecond)
+	{
+		if (aFirst.Loc.Line != aSecond.Loc.Line) return false;
+
+		return (aFirst.Loc.Col + aFirst.Value.size()) == aSecond.Loc.Col;
+	}
+}
+
 /**
  * @brief Construct a new Parser instance.
  *
@@ -52,6 +62,24 @@ const Token& Parser::Peek(std::ptrdiff_t aOffset /* = 0 */) const
 	return Tokens.back();
 }
 
+void Parser::RequireWhitespace(const std::string_view aMessage, std::ptrdiff_t aPreviousOffset /* = -1 */, std::ptrdiff_t aCurrentOffset /* = 0 */)
+{
+	const Token& previous = Peek(aPreviousOffset);
+	const Token& current = Peek(aCurrentOffset);
+	if (IsAdjacent(previous, current))
+	{
+		throw GenerateError(aMessage, current.Loc);
+	}
+}
+
+const Token &Parser::RetrieveBinaryOperator()
+{
+	if (Check(TokenKind::End)) throw GenerateError("Expected expression", Peek().Loc);
+	RequireWhitespace("RePL requires whitespace before binary operator", -2, -1);
+	RequireWhitespace("RePL requires whitespace after binary operator");
+	return Peek(-1);
+}
+
 /**
  * @brief Synchronize the parser after an error by advancing until a statement boundary is found.
  */
@@ -90,7 +118,7 @@ std::unique_ptr<ASTNode> Parser::ParseEquality()
 
 	while (Match({TokenKind::EqualEqual, TokenKind::NotEqual}))
 	{
-		const Token& operatorToken = Peek(-1);
+		const Token& operatorToken = RetrieveBinaryOperator();
 		std::unique_ptr<ASTNode> right = ParseComparison();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
@@ -109,7 +137,7 @@ std::unique_ptr<ASTNode> Parser::ParseComparison()
 
 	while (Match({TokenKind::LesserEqual, TokenKind::GreaterEqual, TokenKind::Lesser, TokenKind::Greater}))
 	{
-		const Token& operatorToken = Peek(-1);
+		const Token& operatorToken = RetrieveBinaryOperator();
 		std::unique_ptr<ASTNode> right = ParseTerm();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
@@ -128,7 +156,7 @@ std::unique_ptr<ASTNode> Parser::ParseTerm()
 
 	while (Match({TokenKind::Plus, TokenKind::Minus}))
 	{
-		const Token& operatorToken = Peek(-1);
+		const Token& operatorToken = RetrieveBinaryOperator();
 		std::unique_ptr<ASTNode> right = ParseFactor();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
@@ -147,7 +175,7 @@ std::unique_ptr<ASTNode> Parser::ParseFactor()
 
 	while (Match({TokenKind::Asterisk, TokenKind::Slash, TokenKind::Percent}))
 	{
-		const Token& operatorToken = Peek(-1);
+		const Token& operatorToken = RetrieveBinaryOperator();
 		std::unique_ptr<ASTNode> right = ParseUnary();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
@@ -164,7 +192,7 @@ std::unique_ptr<ASTNode> Parser::ParseUnary()
 {
 	if (Match({TokenKind::Bang, TokenKind::Minus}))
 	{
-		const Token& operatorToken = Peek(-1);
+		const Token& operatorToken = RetrieveBinaryOperator();
 		std::unique_ptr<ASTNode> operand = ParseUnary();
 		return std::make_unique<UnaryExprNode>(operatorToken, std::move(operand));
 	}
@@ -206,7 +234,9 @@ std::unique_ptr<ASTNode> Parser::ParsePrimary()
 	}
 	else if (Match({TokenKind::OpenParen}))
 	{
+		RequireWhitespace("RePL requires whitespace after '('");
 		std::unique_ptr<ASTNode> expr = ParseExpression();
+		RequireWhitespace("RePL requires whitespace before ')'");
 		Consume(TokenKind::CloseParen, "Expected ')' after expression");
 		return std::make_unique<GroupingExprNode>(std::move(expr));
 	}
@@ -237,13 +267,13 @@ const Token& Parser::Advance()
 /**
  * @brief Generate a parser error.
  *
- * @param message The error message.
- * @param loc The location of the error.
+ * @param aMessage The error message.
+ * @param arLoc The location of the error.
  * @return The generated parser error.
  */
-const ParserError& Parser::GenerateError(const std::string_view message, const TokenLocation &loc)
+const ParserError& Parser::GenerateError(const std::string_view aMessage, const TokenLocation &arLoc)
 {
-	Errors.emplace_back( message, loc );
+	Errors.emplace_back( aMessage, arLoc );
 	return Errors.back();
 }
 
@@ -265,7 +295,7 @@ bool Parser::Check(TokenKind akind) const
 /**
  * @brief Match and consume a token of the specified kind.
  *
- * @param akind The token kind to match.
+ * @param akinds The token kinds to match.
  * @return True when the token matched and was consumed.
  */
 bool Parser::Match(std::initializer_list<TokenKind> aKinds) 
@@ -285,15 +315,15 @@ bool Parser::Match(std::initializer_list<TokenKind> aKinds)
  * @brief Consume a token of the expected kind or generate an error on mismatch.
  *
  * @param akind The expected token kind.
- * @param message The error message to use if consumption fails.
+ * @param aMessage The error message to use if consumption fails.
  * @return The consumed token.
  */
-const Token& Parser::Consume(TokenKind akind, std::string_view message) 
+const Token& Parser::Consume(TokenKind akind, std::string_view aMessage) 
 {
 	if (Check(akind)) 
 	{
 		return Advance();
 	}
 
-	throw GenerateError(message, Peek().Loc);
+	throw GenerateError(aMessage, Peek().Loc);
 }

@@ -232,8 +232,8 @@ InterpreterValue Interpreter::Interpret(const IdentifierExprNode &node)
 
 InterpreterValue Interpreter::Interpret(const BinaryExprNode &node)
 {
-	InterpreterValue leftValue = node.Left->Accept(*this);
-	InterpreterValue rightValue = node.Right->Accept(*this);
+	const InterpreterValue leftValue = node.Left->Accept(*this);
+	const InterpreterValue rightValue = node.Right->Accept(*this);
 
 	switch (node.OperatorToken.Kind)
 	{
@@ -266,7 +266,7 @@ InterpreterValue Interpreter::Interpret(const BinaryExprNode &node)
 
 InterpreterValue Interpreter::Interpret(const UnaryExprNode &node)
 {
-	InterpreterValue operandValue = node.Operand->Accept(*this);
+	const InterpreterValue operandValue = node.Operand->Accept(*this);
 
 	switch (node.OperatorToken.Kind)
 	{
