@@ -107,7 +107,7 @@ void REPL::HandleInput( std::string_view input)
 	const auto& root = parser.GetRoot();
 	if (root != nullptr)
 	{
-		Interpreter interpreter;
-		std::cout << std::visit(Interpreter::Printer, root->Accept(interpreter)) << '\n';
+		InterpreterValue value = Interpreter::Interpret(root);
+		std::cout << std::visit(Interpreter::Printer, value) << '\n';
 	}
 }

@@ -97,7 +97,7 @@ public:
 	 * @return A string representation of this expression node.
 	 */
 	virtual std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	virtual InterpreterValue Accept(Interpreter& apInterpreter) const { return apInterpreter.Interpret(*this); }
+	virtual InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
 };
 
 class KeywordLiteralExprNode final : public ExprNode
@@ -114,7 +114,7 @@ public:
 	 * @return A string representation of this keyword literal expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& ValueToken;
 };
@@ -133,7 +133,7 @@ public:
 	 * @return A string representation of this integer literal expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& ValueToken;
 };
@@ -152,7 +152,7 @@ public:
 	 * @return A string representation of this float literal expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 
 private:
 	const Token& ValueToken;
@@ -172,7 +172,7 @@ public:
 	 * @return A string representation of this string literal expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& ValueToken;
 };
@@ -191,7 +191,7 @@ public:
 	 * @return A string representation of this identifier expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& ValueToken;
 };
@@ -211,7 +211,7 @@ public:
 	 * @return A string representation of this binary expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& OperatorToken;
 	std::unique_ptr<ASTNode> Left;
@@ -233,7 +233,7 @@ public:
 	 * @return A string representation of this unary expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& OperatorToken;
 	std::unique_ptr<ASTNode> Operand;
@@ -253,7 +253,7 @@ public:
 	 * @return A string representation of this grouping expression node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	std::unique_ptr<ASTNode> Inner;
 };

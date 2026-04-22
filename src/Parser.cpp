@@ -37,7 +37,7 @@ void Parser::Parse()
 	}
 	catch(const ParserError& e)
 	{
-		std::cout << std::format("Parser Error: {} at {}\n", e.Message, TokenHelpers::LocationToText(e.Loc));
+		std::cout << std::format("{} Error: {} at {}\n", e.ErrorType == ParserError::Type::Parser ? "Parser" : "Syntax", e.Message, TokenHelpers::LocationToText(e.Loc));
 	}
 	catch(const std::exception& e)
 	{
@@ -68,7 +68,7 @@ void Parser::RequireWhitespace(const std::string_view aMessage, std::ptrdiff_t a
 	const Token& current = Peek(aCurrentOffset);
 	if (IsAdjacent(previous, current))
 	{
-		throw GenerateError(aMessage, current.Loc);
+		throw GenerateError(aMessage, current.Loc, ParserError::Type::Syntax);
 	}
 }
 
@@ -192,7 +192,7 @@ std::unique_ptr<ASTNode> Parser::ParseUnary()
 {
 	if (Match({TokenKind::Bang, TokenKind::Minus}))
 	{
-		const Token& operatorToken = RetrieveBinaryOperator();
+		const Token& operatorToken = Peek(-1);
 		std::unique_ptr<ASTNode> operand = ParseUnary();
 		return std::make_unique<UnaryExprNode>(operatorToken, std::move(operand));
 	}
@@ -269,12 +269,12 @@ const Token& Parser::Advance()
  *
  * @param aMessage The error message.
  * @param arLoc The location of the error.
+ * @param aType The error type.
  * @return The generated parser error.
  */
-const ParserError& Parser::GenerateError(const std::string_view aMessage, const TokenLocation &arLoc)
+ParserError Parser::GenerateError(const std::string_view aMessage, const TokenLocation &arLoc, ParserError::Type aType /* = ParserError::Type::Parser */)
 {
-	Errors.emplace_back( aMessage, arLoc );
-	return Errors.back();
+	return { aMessage, arLoc, aType };
 }
 
 /**

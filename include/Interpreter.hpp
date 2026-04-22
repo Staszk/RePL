@@ -4,11 +4,22 @@
 #include <string_view>
 #include <variant>
 #include <string>
+#include <memory>
+#include "Token.hpp"
 
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 using InterpreterValue = std::variant<std::monostate, int64_t, float, std::string, bool, nullptr_t>;
+
+class InterpreterError : public std::exception
+{
+public:
+	InterpreterError(const std::string_view aMessage)
+	    : std::exception(), Message(aMessage){}
+	
+	const std::string_view Message;
+};
 
 class Interpreter
 {
@@ -23,6 +34,7 @@ public:
 		[](nullptr_t) { return std::string("null"); }
 	};
 
+	static InterpreterValue Interpret(const std::unique_ptr<class ASTNode>& arNodePtr);
 	InterpreterValue Interpret(const class ASTNode& node);
 	InterpreterValue Interpret(const class ExprNode& node);
 	InterpreterValue Interpret(const class KeywordLiteralExprNode& node);
@@ -33,6 +45,9 @@ public:
 	InterpreterValue Interpret(const class BinaryExprNode& node);
 	InterpreterValue Interpret(const class UnaryExprNode& node);
 	InterpreterValue Interpret(const class GroupingExprNode& node);
+
+public:
+	static inline InterpreterError GenerateError(const std::string_view aMessage);
 };
 
 #endif // REPL_INTERPRETER_HPP

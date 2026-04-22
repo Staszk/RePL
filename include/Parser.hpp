@@ -8,10 +8,14 @@
 class ParserError : public std::exception
 {
 public:
-	ParserError(const std::string_view message, const TokenLocation& loc)
-	    : std::exception(), Message(message), Loc(loc) {}
+	enum class Type : uint8_t { Parser, Syntax };
+	
+	ParserError(const std::string_view aMessage, const TokenLocation& aLoc, Type aType = Type::Parser)
+	    : std::exception(), Message(aMessage), Loc(aLoc), ErrorType(aType) {}
+	
 	const std::string_view Message;
 	const TokenLocation& Loc;
+	const Type ErrorType;
 };
 
 /**
@@ -29,17 +33,16 @@ public:
 	std::unique_ptr<ASTNode>& GetRoot() { return Root; }
 	
 private:
-
-	const ParserError& GenerateError(const std::string_view aMessage, const TokenLocation& arLoc);
-	bool Check(TokenKind type) const;
-	const Token& Consume(TokenKind type, std::string_view message);
-	const Token& Advance();
-	bool Match(std::initializer_list<TokenKind> aKinds);
 	void Parse();
-	const Token& Peek(std::ptrdiff_t aOffset = 0) const;
-	void RequireWhitespace(const std::string_view aMessage, std::ptrdiff_t aPreviousOffset = -1, std::ptrdiff_t aCurrentOffset = 0);
-	const Token& RetrieveBinaryOperator();
 	void Synchronize();
+	void RequireWhitespace(const std::string_view aMessage, std::ptrdiff_t aPreviousOffset = -1, std::ptrdiff_t aCurrentOffset = 0);
+	ParserError GenerateError(const std::string_view aMessage, const TokenLocation& arLoc, ParserError::Type aType = ParserError::Type::Parser);
+	const Token& Advance();
+	const Token& Consume(TokenKind type, std::string_view message);
+	const Token& Peek(std::ptrdiff_t aOffset = 0) const;
+	const Token& RetrieveBinaryOperator();
+	bool Check(TokenKind type) const;
+	bool Match(std::initializer_list<TokenKind> aKinds);
 
 	std::unique_ptr<ASTNode> ParseExpression();
 	std::unique_ptr<ASTNode> ParseEquality();
@@ -63,7 +66,6 @@ private:
 	size_t Cursor{0};
 	// Output
 	std::unique_ptr<ASTNode> Root{};
-	std::vector<ParserError> Errors{};
 };
 
 #endif // REPL_PARSER_HPP

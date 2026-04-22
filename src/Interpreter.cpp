@@ -4,6 +4,8 @@
 #include <charconv>
 #include <concepts>
 #include <system_error>
+#include <format>
+#include <iostream>
 
 namespace 
 {
@@ -185,6 +187,26 @@ namespace
 
 }
 
+InterpreterValue Interpreter::Interpret(const std::unique_ptr<ASTNode> &arNodePtr)
+{
+	
+	try
+	{
+		Interpreter interpreter;
+		return arNodePtr->Accept(interpreter);
+	}
+	catch(const InterpreterError& e)
+	{
+		std::cout << std::format("Interpreter Error: {}\n", e.Message);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+
+	return InterpreterValue();
+}
+
 InterpreterValue Interpreter::Interpret(const ASTNode &node)
 {
 	return InterpreterValue();
@@ -283,4 +305,9 @@ InterpreterValue Interpreter::Interpret(const UnaryExprNode &node)
 InterpreterValue Interpreter::Interpret(const GroupingExprNode &node)
 {
 	return node.Inner->Accept(*this);
+}
+
+InterpreterError Interpreter::GenerateError(const std::string_view aMessage)
+{
+	return { aMessage };
 }
