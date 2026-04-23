@@ -34,7 +34,6 @@ public:
 		[](nullptr_t) { return std::string("null"); }
 	};
 
-	std::pair<InterpreterValue, bool> BeginInterpret(const std::unique_ptr<class ExprNode>& arNodePtr);
 	InterpreterValue Interpret(const class ExprNode& node);
 	InterpreterValue Interpret(const class KeywordLiteralExprNode& node);
 	InterpreterValue Interpret(const class IntLiteralExprNode& node);
@@ -44,6 +43,8 @@ public:
 	InterpreterValue Interpret(const class BinaryExprNode& node);
 	InterpreterValue Interpret(const class UnaryExprNode& node);
 	InterpreterValue Interpret(const class GroupingExprNode& node);
+
+	void Execute(const std::unique_ptr<class StmntNode>& arNodePtr);
 
 	static inline InterpreterError GenerateError(const std::string_view aMessage);
 private:

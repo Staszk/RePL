@@ -3,7 +3,7 @@
 #include "Parser.hpp"
 #include <iostream>
 
-Interpreter REPL::_Interpreter{};
+Interpreter REPL::Interpreter{};
 
 namespace
 {
@@ -105,13 +105,9 @@ void REPL::HandleInput( std::string_view input)
 {
 	Lexer lexer(input, false);
 	Parser parser(lexer.tokens());
-	const std::unique_ptr<ExprNode>& root = parser.GetRoot();
-	if (root != nullptr)
+	const Program& program = parser.GetProgram();
+	for (auto& statement : program)
 	{
-		auto [value, success] = _Interpreter.BeginInterpret(root);
-		if (success)
-		{
-			std::cout << std::visit(Interpreter::Printer, value) << '\n';
-		}
+		Interpreter.Execute(statement);
 	}
 }

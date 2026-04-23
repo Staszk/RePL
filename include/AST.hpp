@@ -7,6 +7,7 @@
 #include <memory>
 #include <string_view>
 #include <assert.h>
+#include <iostream>
 
 /**
  * @brief Kinds of AST nodes in the parser.
@@ -17,7 +18,6 @@ enum class ExprNodeKind : uint8_t
 	Expr,
 	KeywordLiteralExpr, IntLiteralExpr, FloatLiteralExpr, StringLiteralExpr, CharLiteralExpr,
 	IdentifierExpr, BinaryExpr, UnaryExpr, GroupingExpr,
-	
 };
 
 enum class StmntNodeKind : uint8_t
@@ -25,7 +25,7 @@ enum class StmntNodeKind : uint8_t
 	Invalid = 0,
 	Stmnt,
 	ExprStmnt, IfStmnt, ForStmnt, WhileStmnt, ReturnStmnt, ScopeStmnt, VarDeclStmnt,
-
+	PrintStmnt,
 };
 
 constexpr std::string_view ExprNodeKindToText(ExprNodeKind aKind)
@@ -63,6 +63,7 @@ constexpr std::string_view StmntNodeKindToText(StmntNodeKind aKind)
 	case ReturnStmnt: return "ReturnStmnt";
 	case ScopeStmnt: return "ScopeStmnt";
 	case VarDeclStmnt: return "VarDeclStmnt";
+	case PrintStmnt: return "PrintStmnt";
 	}
 
 	assert(false && "Invalid StmntNodeKind");
@@ -263,7 +264,7 @@ public:
 	 * @return A string representation of this statement node.
 	 */
 	virtual std::string Accept(ASTPrinter *apPrinter) const = 0;
-	//virtual InterpreterValue Accept(Interpreter& apInterpreter) const = 0;
+	virtual void Accept(Interpreter& apInterpreter) const = 0;
 
 protected:
 	StmntNodeKind Kind;
@@ -277,14 +278,34 @@ public:
 	ExprStmntNode(std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::ExprStmnt), Expression(std::move(aExprNode)) {}
 	
 	/**
-	 * @brief Accept a visitor to print this grouping expression node.
+	 * @brief Accept a visitor to print this expression statement node.
 	 * 
 	 * @param apPrinter The AST printer visitor to accept.
-	 * @return A string representation of this grouping expression node.
+	 * @return A string representation of this expression statement node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return Expression->Accept(apPrinter); }
-	//InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
+	void Accept(Interpreter& apInterpreter) const override final { Expression->Accept(apInterpreter); }
 	
+private:
+	std::unique_ptr<ExprNode> Expression;
+};
+
+class PrintStmntNode : public StmntNode
+{
+	friend class ASTPrinter;
+	friend class Interpreter;
+public:
+	PrintStmntNode(std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::PrintStmnt), Expression(std::move(aExprNode)) {}
+	
+	/**
+	 * @brief Accept a visitor to print this print statement node.
+	 * 
+	 * @param apPrinter The AST printer visitor to accept.
+	 * @return A string representation of this print statement node.
+	 */
+	std::string Accept(ASTPrinter *apPrinter) const override { return Expression->Accept(apPrinter); }
+	void Accept(Interpreter& apInterpreter) const override final { std::cout << std::visit(Interpreter::Printer, Expression->Accept(apInterpreter)) << std::endl; }
+
 private:
 	std::unique_ptr<ExprNode> Expression;
 };

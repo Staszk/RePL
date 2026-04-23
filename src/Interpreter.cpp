@@ -235,25 +235,6 @@ namespace
 
 }
 
-std::pair<InterpreterValue, bool> Interpreter::BeginInterpret(const std::unique_ptr<ExprNode> &arNodePtr)
-{
-	try
-	{
-		PreviousResult = arNodePtr->Accept(*this);
-		return { PreviousResult, true };
-	}
-	catch(const InterpreterError& e)
-	{
-		std::cout << std::format("Interpreter Error: {}\n", e.Message);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-	}
-
-	return { InterpreterValue(), false };
-}
-
 InterpreterValue Interpreter::Interpret(const ExprNode &node)
 {
 	return InterpreterValue();
@@ -351,6 +332,11 @@ InterpreterValue Interpreter::Interpret(const UnaryExprNode &node)
 InterpreterValue Interpreter::Interpret(const GroupingExprNode &node)
 {
 	return node.Inner->Accept(*this);
+}
+
+void Interpreter::Execute(const std::unique_ptr<StmntNode>& arNodePtr)
+{
+	arNodePtr->Accept(*this);
 }
 
 InterpreterError Interpreter::GenerateError(const std::string_view aMessage)

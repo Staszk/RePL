@@ -2,13 +2,16 @@ program				->	statement* EOF
 					;
 
 statement			->	expressionStmnt
+					|	keywordStmnt
 					|	functionStmnt
 					;
 
 expressionStmnt		->	expression ";"
 					;
 
-functionStmnt		->	identifier expression ";"
+keywordStmnt		->	keywordLiteral "(" expression ")" ";"
+
+functionStmnt		->	identifier "(" expression ")" ";"
 					;
 
 expression          ->  equality

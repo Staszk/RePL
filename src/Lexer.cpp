@@ -37,7 +37,7 @@ namespace
 		return static_cast<unsigned char>(c);
 	}
 
-	constexpr std::array<std::string_view, 12> KeywordLiterals =
+	constexpr std::array<std::string_view, 13> KeywordLiterals =
 	{
 		"_",
 		"break",
@@ -51,6 +51,7 @@ namespace
 		"void",
 		"true",
 		"false",
+		"print",
 	};
 
 	/**

@@ -34,13 +34,7 @@ void Parser::Parse()
 	{
 		while (CursorValid())
 		{
-			Statements.emplace_back(ParseStatement());
-		}
-
-		ASTPrinter printer;
-		for (auto& statement : Statements)
-		{
-			std::cout << statement->Accept(&printer) << std::endl;
+			Program.emplace_back(ParseStatement());
 		}
 	}
 	catch(const ParserError& e)
@@ -61,7 +55,7 @@ void Parser::Parse()
  */
 const Token& Parser::Peek(std::ptrdiff_t aOffset /* = 0 */) const 
 {
-	assert(Cursor + aOffset >= 0 && "Peek value cannot be negative");
+	assert(Cursor + aOffset >= 0 && "Peek index cannot be negative");
 
 	if (Cursor + aOffset < TokenCount) 
 	{
@@ -254,6 +248,14 @@ std::unique_ptr<ExprNode> Parser::ParsePrimary()
 
 std::unique_ptr<StmntNode> Parser::ParseStatement()
 {
+	if (Match({TokenKind::KeywordLiteral}))
+	{
+		if (Peek(-1).Value == "print")
+		{
+			return ParsePrintStmnt();
+		}
+	}
+
 	return ParseExprStmnt();
 }
 
@@ -262,6 +264,15 @@ std::unique_ptr<StmntNode> Parser::ParseExprStmnt()
 	std::unique_ptr<ExprNode> expr = ParseExpression();
 	Consume(TokenKind::Semicolon, "Expect ';' after expression");
 	return std::make_unique<ExprStmntNode>(std::move(expr));
+}
+
+std::unique_ptr<StmntNode> Parser::ParsePrintStmnt()
+{
+	RequireWhitespace("RePL requires whitespace after after keyword");
+	if (!Check(TokenKind::OpenParen)) throw GenerateError("\"print\" must be followed by grouping.", Peek().Loc);
+	std::unique_ptr<ExprNode> expr = ParseExpression();
+	Consume(TokenKind::Semicolon, "Expect ';' after expression");
+	return std::make_unique<PrintStmntNode>(std::move(expr));
 }
 
 /**

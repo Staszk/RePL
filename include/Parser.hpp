@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 
+using Program = std::vector<std::unique_ptr<StmntNode>>;
+
 class ParserError : public std::exception
 {
 public:
@@ -27,11 +29,11 @@ public:
 	Parser(const std::vector<Token>& tokens);
 
 	/**
-	 * @brief Get the parser root AST node.
+	 * @brief Get the vector of statement nodes (aka Program).
 	 *
-	 * @return A reference to the root AST node pointer.
+	 * @return A reference to the program vector.
 	 */
-	std::unique_ptr<ExprNode>& GetRoot() { return Root; }
+	Program& GetProgram() { return Program; }
 	
 private:
 	void Parse();
@@ -55,6 +57,7 @@ private:
 
 	std::unique_ptr<StmntNode> ParseStatement();
 	std::unique_ptr<StmntNode> ParseExprStmnt();
+	std::unique_ptr<StmntNode> ParsePrintStmnt();
 
 	/**
 	 * @brief Check if the current token position is valid for parsing.
@@ -69,8 +72,7 @@ private:
 	const size_t TokenCount{0};
 	size_t Cursor{0};
 	// Output
-	std::unique_ptr<ExprNode> Root{};
-	std::vector<std::unique_ptr<StmntNode>> Statements;
+	Program Program;
 };
 
 #endif // REPL_PARSER_HPP

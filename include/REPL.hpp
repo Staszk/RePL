@@ -14,7 +14,7 @@ private:
 	static void ClearConsole();
 	static void HandleInput(const std::string_view input);
 
-	static Interpreter _Interpreter;
+	static Interpreter Interpreter;
 };
 
 #endif // REPL_REPL_HPP
