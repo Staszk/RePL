@@ -1,3 +1,16 @@
+program				->	statement* EOF
+					;
+
+statement			->	expressionStmnt
+					|	functionStmnt
+					;
+
+expressionStmnt		->	expression ";"
+					;
+
+functionStmnt		->	identifier expression ";"
+					;
+
 expression          ->  equality
 					|   comparison
 					|   term
@@ -33,7 +46,11 @@ unary               ->  ( "!" | "-" | "--" | "++" ) unary
 					;
 
 primary             ->  literal
+					|	identifier
 					|   "(" expression ")"
+					;
+
+identifier			->
 					;
 
 literal             ->  keywordLiteral
@@ -45,6 +62,7 @@ literal             ->  keywordLiteral
 					;
 
 keywordLiteral      ->  types
+					|	"_"
 					|   "break"
 					|   "continue"
 					|   "while"   

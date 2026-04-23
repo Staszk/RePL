@@ -4,6 +4,7 @@
 #include "AST.hpp"
 #include "Lexer.hpp"
 #include <memory>
+#include <vector>
 
 class ParserError : public std::exception
 {
@@ -30,7 +31,7 @@ public:
 	 *
 	 * @return A reference to the root AST node pointer.
 	 */
-	std::unique_ptr<ASTNode>& GetRoot() { return Root; }
+	std::unique_ptr<ExprNode>& GetRoot() { return Root; }
 	
 private:
 	void Parse();
@@ -44,20 +45,23 @@ private:
 	bool Check(TokenKind type) const;
 	bool Match(std::initializer_list<TokenKind> aKinds);
 
-	std::unique_ptr<ASTNode> ParseExpression();
-	std::unique_ptr<ASTNode> ParseEquality();
-	std::unique_ptr<ASTNode> ParseComparison();
-	std::unique_ptr<ASTNode> ParseTerm();
-	std::unique_ptr<ASTNode> ParseFactor();
-	std::unique_ptr<ASTNode> ParseUnary();
-	std::unique_ptr<ASTNode> ParsePrimary();
+	std::unique_ptr<ExprNode> ParseExpression();
+	std::unique_ptr<ExprNode> ParseEquality();
+	std::unique_ptr<ExprNode> ParseComparison();
+	std::unique_ptr<ExprNode> ParseTerm();
+	std::unique_ptr<ExprNode> ParseFactor();
+	std::unique_ptr<ExprNode> ParseUnary();
+	std::unique_ptr<ExprNode> ParsePrimary();
+
+	std::unique_ptr<StmntNode> ParseStatement();
+	std::unique_ptr<StmntNode> ParseExprStmnt();
 
 	/**
 	 * @brief Check if the current token position is valid for parsing.
 	 * 
 	 * @return True if the cursor is within the token stream bounds.
 	 */
-	bool CursorValid() const { return Cursor < TokenCount; }
+	bool CursorValid() const { return Cursor < TokenCount && Tokens[Cursor].Kind != TokenKind::End; }
 
 	// Input
 	const std::vector<Token>& Tokens;
@@ -65,7 +69,8 @@ private:
 	const size_t TokenCount{0};
 	size_t Cursor{0};
 	// Output
-	std::unique_ptr<ASTNode> Root{};
+	std::unique_ptr<ExprNode> Root{};
+	std::vector<std::unique_ptr<StmntNode>> Statements;
 };
 
 #endif // REPL_PARSER_HPP

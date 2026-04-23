@@ -105,7 +105,7 @@ void REPL::HandleInput( std::string_view input)
 {
 	Lexer lexer(input, false);
 	Parser parser(lexer.tokens());
-	const std::unique_ptr<ASTNode>& root = parser.GetRoot();
+	const std::unique_ptr<ExprNode>& root = parser.GetRoot();
 	if (root != nullptr)
 	{
 		auto [value, success] = _Interpreter.BeginInterpret(root);

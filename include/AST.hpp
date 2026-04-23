@@ -11,26 +11,28 @@
 /**
  * @brief Kinds of AST nodes in the parser.
  */
-enum class ASTNodeKind : uint8_t
+enum class ExprNodeKind : uint8_t
 {
 	Invalid = 0,
-	// Expressions
 	Expr,
 	KeywordLiteralExpr, IntLiteralExpr, FloatLiteralExpr, StringLiteralExpr, CharLiteralExpr,
-	IdentifierExpr, BinaryExpr, UnaryExpr, CallExpr,
-	// Grouping
-	GroupingExpr,
-	// Statements
+	IdentifierExpr, BinaryExpr, UnaryExpr, GroupingExpr,
+	
+};
+
+enum class StmntNodeKind : uint8_t
+{
+	Invalid = 0,
 	Stmnt,
 	ExprStmnt, IfStmnt, ForStmnt, WhileStmnt, ReturnStmnt, ScopeStmnt, VarDeclStmnt,
 
 };
 
-constexpr std::string_view ASTNodeKindToText(ASTNodeKind aKind)
+constexpr std::string_view ExprNodeKindToText(ExprNodeKind aKind)
 {
 	switch (aKind)
 	{
-	using enum ASTNodeKind;
+		using enum ExprNodeKind;
 	case Invalid: return "Invalid";
 	case Expr: return "Expr";
 	case KeywordLiteralExpr: return "KeywordLiteralExpr";
@@ -41,8 +43,18 @@ constexpr std::string_view ASTNodeKindToText(ASTNodeKind aKind)
 	case IdentifierExpr: return "IdentifierExpr";
 	case BinaryExpr: return "BinaryExpr";
 	case UnaryExpr: return "UnaryExpr";
-	case CallExpr: return "CallExpr";
 	case GroupingExpr: return "GroupingExpr";
+	}
+
+	assert(false && "Invalid ExprNodeKind");
+	return "";
+}
+
+constexpr std::string_view StmntNodeKindToText(StmntNodeKind aKind)
+{
+	switch(aKind)
+	{
+		using enum StmntNodeKind;
 	case Stmnt: return "Stmnt";
 	case ExprStmnt: return "ExprStmnt";
 	case IfStmnt: return "IfStmnt";
@@ -53,42 +65,17 @@ constexpr std::string_view ASTNodeKindToText(ASTNodeKind aKind)
 	case VarDeclStmnt: return "VarDeclStmnt";
 	}
 
-	assert(false && "Invalid ASTNodeKind");
+	assert(false && "Invalid StmntNodeKind");
 	return "";
 }
 
-/**
- * @brief Base class for parser AST nodes.
- */
-class ASTNode 
+class ExprNode
 {
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	ASTNode() noexcept : Kind(ASTNodeKind::Invalid) {}
-	ASTNode(ASTNodeKind aKind) noexcept : Kind(aKind) {}
-	virtual ~ASTNode() = default;
-
-	/**
-	 * @brief Accept a visitor to print this node.
-	 * 
-	 * @param apPrinter The AST printer visitor to accept.
-	 * @return A string representation of this node.
-	 */
-	virtual std::string Accept(ASTPrinter *apPrinter) const { return apPrinter->Print(*this); }
-	virtual InterpreterValue Accept(Interpreter& apInterpreter) const { return apInterpreter.Interpret(*this); }
-
-protected:
-	ASTNodeKind Kind{};
-};
-
-class ExprNode : public ASTNode
-{
-	friend class ASTPrinter;
-	friend class Interpreter;
-public:
-	ExprNode() noexcept : ASTNode(ASTNodeKind::Expr) {}
-	ExprNode(ASTNodeKind aKind) noexcept : ASTNode(aKind) {}
+	ExprNode() noexcept : Kind(ExprNodeKind::Expr) {}
+	ExprNode(ExprNodeKind aKind) noexcept : Kind(aKind) {}
 	
 	/**
 	 * @brief Accept a visitor to print this expression node.
@@ -96,8 +83,11 @@ public:
 	 * @param apPrinter The AST printer visitor to accept.
 	 * @return A string representation of this expression node.
 	 */
-	virtual std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
-	virtual InterpreterValue Accept(Interpreter& apInterpreter) const override { return apInterpreter.Interpret(*this); }
+	virtual std::string Accept(ASTPrinter *apPrinter) const = 0;
+	virtual InterpreterValue Accept(Interpreter& apInterpreter) const = 0;
+
+protected:
+	ExprNodeKind Kind;
 };
 
 class KeywordLiteralExprNode final : public ExprNode
@@ -105,7 +95,7 @@ class KeywordLiteralExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	KeywordLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::KeywordLiteralExpr), ValueToken(token) {}
+	KeywordLiteralExprNode(const Token& token) noexcept : ExprNode(ExprNodeKind::KeywordLiteralExpr), ValueToken(token) {}
 
 	/**
 	 * @brief Accept a visitor to print this keyword literal expression node.
@@ -124,7 +114,7 @@ class IntLiteralExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	IntLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IntLiteralExpr), ValueToken(token) {}
+	IntLiteralExprNode(const Token& token) noexcept : ExprNode(ExprNodeKind::IntLiteralExpr), ValueToken(token) {}
 
 	/**
 	 * @brief Accept a visitor to print this integer literal expression node.
@@ -143,7 +133,7 @@ class FloatLiteralExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	FloatLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::FloatLiteralExpr), ValueToken(token) {}
+	FloatLiteralExprNode(const Token& token) noexcept : ExprNode(ExprNodeKind::FloatLiteralExpr), ValueToken(token) {}
 
 	/**
 	 * @brief Accept a visitor to print this float literal expression node.
@@ -163,7 +153,7 @@ class StringLiteralExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	StringLiteralExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::StringLiteralExpr), ValueToken(token) {}
+	StringLiteralExprNode(const Token& token) noexcept : ExprNode(ExprNodeKind::StringLiteralExpr), ValueToken(token) {}
 
 	/**
 	 * @brief Accept a visitor to print this string literal expression node.
@@ -182,7 +172,7 @@ class IdentifierExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	IdentifierExprNode(const Token& token) noexcept : ExprNode(ASTNodeKind::IdentifierExpr), ValueToken(token) {}
+	IdentifierExprNode(const Token& token) noexcept : ExprNode(ExprNodeKind::IdentifierExpr), ValueToken(token) {}
 	
 	/**
 	 * @brief Accept a visitor to print this identifier expression node.
@@ -201,8 +191,8 @@ class BinaryExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	BinaryExprNode(const Token& token, std::unique_ptr<ASTNode> left, std::unique_ptr<ASTNode> right)
-	    noexcept : ExprNode(ASTNodeKind::BinaryExpr), OperatorToken(token), Left(std::move(left)), Right(std::move(right)) {}
+	BinaryExprNode(const Token& token, std::unique_ptr<ExprNode> left, std::unique_ptr<ExprNode> right)
+	    noexcept : ExprNode(ExprNodeKind::BinaryExpr), OperatorToken(token), Left(std::move(left)), Right(std::move(right)) {}
 
 	/**
 	 * @brief Accept a visitor to print this binary expression node.
@@ -214,8 +204,8 @@ public:
 	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& OperatorToken;
-	std::unique_ptr<ASTNode> Left;
-	std::unique_ptr<ASTNode> Right;
+	std::unique_ptr<ExprNode> Left;
+	std::unique_ptr<ExprNode> Right;
 };
 
 class UnaryExprNode final : public ExprNode
@@ -223,8 +213,8 @@ class UnaryExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	UnaryExprNode(const Token& token, std::unique_ptr<ASTNode> operand)
-	    noexcept : ExprNode(ASTNodeKind::UnaryExpr), OperatorToken(token), Operand(std::move(operand)) {}
+	UnaryExprNode(const Token& token, std::unique_ptr<ExprNode> operand)
+	    noexcept : ExprNode(ExprNodeKind::UnaryExpr), OperatorToken(token), Operand(std::move(operand)) {}
 
 	/**
 	 * @brief Accept a visitor to print this unary expression node.
@@ -236,7 +226,7 @@ public:
 	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
 	const Token& OperatorToken;
-	std::unique_ptr<ASTNode> Operand;
+	std::unique_ptr<ExprNode> Operand;
 };
 
 class GroupingExprNode final : public ExprNode
@@ -244,7 +234,7 @@ class GroupingExprNode final : public ExprNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	GroupingExprNode(std::unique_ptr<ASTNode> inner) noexcept : ExprNode(ASTNodeKind::GroupingExpr), Inner(std::move(inner)) {}
+	GroupingExprNode(std::unique_ptr<ExprNode> inner) noexcept : ExprNode(ExprNodeKind::GroupingExpr), Inner(std::move(inner)) {}
 
 	/**
 	 * @brief Accept a visitor to print this grouping expression node.
@@ -255,15 +245,48 @@ public:
 	std::string Accept(ASTPrinter *apPrinter) const override { return apPrinter->Print(*this); }
 	InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
 private:
-	std::unique_ptr<ASTNode> Inner;
+	std::unique_ptr<ExprNode> Inner;
 };
 
-class StatementNode : public ASTNode
+class StmntNode
 {
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	StatementNode() : ASTNode(ASTNodeKind::Stmnt) {}
+	StmntNode() noexcept : Kind(StmntNodeKind::Stmnt) {}
+	StmntNode(StmntNodeKind aKind) noexcept : Kind(aKind) {}
+	
+	/**
+	 * @brief Accept a visitor to print this statement node.
+	 * 
+	 * @param apPrinter The AST printer visitor to accept.
+	 * @return A string representation of this statement node.
+	 */
+	virtual std::string Accept(ASTPrinter *apPrinter) const = 0;
+	//virtual InterpreterValue Accept(Interpreter& apInterpreter) const = 0;
+
+protected:
+	StmntNodeKind Kind;
+};
+
+class ExprStmntNode : public StmntNode
+{
+	friend class ASTPrinter;
+	friend class Interpreter;
+public:
+	ExprStmntNode(std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::ExprStmnt), Expression(std::move(aExprNode)) {}
+	
+	/**
+	 * @brief Accept a visitor to print this grouping expression node.
+	 * 
+	 * @param apPrinter The AST printer visitor to accept.
+	 * @return A string representation of this grouping expression node.
+	 */
+	std::string Accept(ASTPrinter *apPrinter) const override { return Expression->Accept(apPrinter); }
+	//InterpreterValue Accept(Interpreter& apInterpreter) const override final { return apInterpreter.Interpret(*this); }
+	
+private:
+	std::unique_ptr<ExprNode> Expression;
 };
 
 #endif // REPL_AST_HPP

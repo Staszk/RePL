@@ -32,8 +32,16 @@ void Parser::Parse()
 {
 	try
 	{
-		Root = ParseExpression();
+		while (CursorValid())
+		{
+			Statements.emplace_back(ParseStatement());
+		}
+
 		ASTPrinter printer;
+		for (auto& statement : Statements)
+		{
+			std::cout << statement->Accept(&printer) << std::endl;
+		}
 	}
 	catch(const ParserError& e)
 	{
@@ -102,7 +110,7 @@ void Parser::Synchronize()
  *
  * @return A unique pointer to the parsed expression AST node.
  */
-std::unique_ptr<ASTNode> Parser::ParseExpression()
+std::unique_ptr<ExprNode> Parser::ParseExpression()
 {
 	return ParseEquality();
 }
@@ -112,14 +120,14 @@ std::unique_ptr<ASTNode> Parser::ParseExpression()
  *
  * @return A unique pointer to the parsed equality AST node.
  */
-std::unique_ptr<ASTNode> Parser::ParseEquality()
+std::unique_ptr<ExprNode> Parser::ParseEquality()
 {
-	std::unique_ptr<ASTNode> node = ParseComparison();
+	std::unique_ptr<ExprNode> node = ParseComparison();
 
 	while (Match({TokenKind::EqualEqual, TokenKind::NotEqual}))
 	{
 		const Token& operatorToken = RetrieveBinaryOperator();
-		std::unique_ptr<ASTNode> right = ParseComparison();
+		std::unique_ptr<ExprNode> right = ParseComparison();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
 
@@ -131,14 +139,14 @@ std::unique_ptr<ASTNode> Parser::ParseEquality()
  *
  * @return A unique pointer to the parsed comparison AST node.
  */
-std::unique_ptr<ASTNode> Parser::ParseComparison()
+std::unique_ptr<ExprNode> Parser::ParseComparison()
 {
-	std::unique_ptr<ASTNode> node = ParseTerm();
+	std::unique_ptr<ExprNode> node = ParseTerm();
 
 	while (Match({TokenKind::LesserEqual, TokenKind::GreaterEqual, TokenKind::Lesser, TokenKind::Greater}))
 	{
 		const Token& operatorToken = RetrieveBinaryOperator();
-		std::unique_ptr<ASTNode> right = ParseTerm();
+		std::unique_ptr<ExprNode> right = ParseTerm();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
 
@@ -150,14 +158,14 @@ std::unique_ptr<ASTNode> Parser::ParseComparison()
  *
  * @return A unique pointer to the parsed term AST node.
  */
-std::unique_ptr<ASTNode> Parser::ParseTerm()
+std::unique_ptr<ExprNode> Parser::ParseTerm()
 {
-	std::unique_ptr<ASTNode> node = ParseFactor();
+	std::unique_ptr<ExprNode> node = ParseFactor();
 
 	while (Match({TokenKind::Plus, TokenKind::Minus}))
 	{
 		const Token& operatorToken = RetrieveBinaryOperator();
-		std::unique_ptr<ASTNode> right = ParseFactor();
+		std::unique_ptr<ExprNode> right = ParseFactor();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
 
@@ -169,14 +177,14 @@ std::unique_ptr<ASTNode> Parser::ParseTerm()
  *
  * @return A unique pointer to the parsed factor AST node.
  */
-std::unique_ptr<ASTNode> Parser::ParseFactor()
+std::unique_ptr<ExprNode> Parser::ParseFactor()
 {
-	std::unique_ptr<ASTNode> node = ParseUnary();
+	std::unique_ptr<ExprNode> node = ParseUnary();
 
 	while (Match({TokenKind::Asterisk, TokenKind::Slash, TokenKind::Percent}))
 	{
 		const Token& operatorToken = RetrieveBinaryOperator();
-		std::unique_ptr<ASTNode> right = ParseUnary();
+		std::unique_ptr<ExprNode> right = ParseUnary();
 		node = std::make_unique<BinaryExprNode>(operatorToken, std::move(node), std::move(right));
 	}
 
@@ -188,12 +196,12 @@ std::unique_ptr<ASTNode> Parser::ParseFactor()
  *
  * @return A unique pointer to the parsed unary AST node.
  */
-std::unique_ptr<ASTNode> Parser::ParseUnary()
+std::unique_ptr<ExprNode> Parser::ParseUnary()
 {
 	if (Match({TokenKind::Bang, TokenKind::Minus}))
 	{
 		const Token& operatorToken = Peek(-1);
-		std::unique_ptr<ASTNode> operand = ParseUnary();
+		std::unique_ptr<ExprNode> operand = ParseUnary();
 		return std::make_unique<UnaryExprNode>(operatorToken, std::move(operand));
 	}
 
@@ -205,7 +213,7 @@ std::unique_ptr<ASTNode> Parser::ParseUnary()
  *
  * @return A unique pointer to the parsed primary AST node.
  */
-std::unique_ptr<ASTNode> Parser::ParsePrimary()
+std::unique_ptr<ExprNode> Parser::ParsePrimary()
 {
 	if (Match({TokenKind::IntLiteral}))
 	{
@@ -235,13 +243,25 @@ std::unique_ptr<ASTNode> Parser::ParsePrimary()
 	else if (Match({TokenKind::OpenParen}))
 	{
 		RequireWhitespace("RePL requires whitespace after '('");
-		std::unique_ptr<ASTNode> expr = ParseExpression();
+		std::unique_ptr<ExprNode> expr = ParseExpression();
 		RequireWhitespace("RePL requires whitespace before ')'");
 		Consume(TokenKind::CloseParen, "Expected ')' after expression");
 		return std::make_unique<GroupingExprNode>(std::move(expr));
 	}
 
 	throw GenerateError("Expected expression", Peek().Loc);
+}
+
+std::unique_ptr<StmntNode> Parser::ParseStatement()
+{
+	return ParseExprStmnt();
+}
+
+std::unique_ptr<StmntNode> Parser::ParseExprStmnt()
+{
+	std::unique_ptr<ExprNode> expr = ParseExpression();
+	Consume(TokenKind::Semicolon, "Expect ';' after expression");
+	return std::make_unique<ExprStmntNode>(std::move(expr));
 }
 
 /**

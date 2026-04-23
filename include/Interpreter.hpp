@@ -34,8 +34,7 @@ public:
 		[](nullptr_t) { return std::string("null"); }
 	};
 
-	std::pair<InterpreterValue, bool> BeginInterpret(const std::unique_ptr<class ASTNode>& arNodePtr);
-	InterpreterValue Interpret(const class ASTNode& node);
+	std::pair<InterpreterValue, bool> BeginInterpret(const std::unique_ptr<class ExprNode>& arNodePtr);
 	InterpreterValue Interpret(const class ExprNode& node);
 	InterpreterValue Interpret(const class KeywordLiteralExprNode& node);
 	InterpreterValue Interpret(const class IntLiteralExprNode& node);

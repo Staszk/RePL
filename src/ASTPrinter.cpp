@@ -4,17 +4,6 @@
 #include <sstream>
 
 /**
- * @brief Print a string representation of the given AST node and its children.
- * 
- * @param node UNUSED: The AST node to print.
- * @return A string representation of the AST node and its children.
- */
-std::string ASTPrinter::Print(const class ASTNode&)
-{
-	return "";
-}
-
-/**
  * @brief Print a string representation of the given expression node.
  * 
  * @param node UNUSED: The expression node to print.
@@ -22,7 +11,7 @@ std::string ASTPrinter::Print(const class ASTNode&)
  */
 std::string ASTPrinter::Print(const class ExprNode&)
 {
-	return "";
+	return "Invalid. Should not be parsing base class";
 }
 
 /**
@@ -120,11 +109,11 @@ std::string ASTPrinter::Print(const class GroupingExprNode& arNode)
  * @param aChildren The list of child nodes.
  * @return A string representation of the parenthesized node.
  */
-std::string ASTPrinter::Parenthesize(const std::string_view aName, std::initializer_list<const ASTNode*> aChildren)
+std::string ASTPrinter::Parenthesize(const std::string_view aName, std::initializer_list<const ExprNode*> aChildren)
 {
 	std::ostringstream result;
 	result << "(" << aName;
-	for (const ASTNode* child : aChildren)
+	for (const ExprNode* child : aChildren)
 	{
 	    result << " ";
 	    result << child->Accept(this);

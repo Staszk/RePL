@@ -235,7 +235,7 @@ namespace
 
 }
 
-std::pair<InterpreterValue, bool> Interpreter::BeginInterpret(const std::unique_ptr<ASTNode> &arNodePtr)
+std::pair<InterpreterValue, bool> Interpreter::BeginInterpret(const std::unique_ptr<ExprNode> &arNodePtr)
 {
 	try
 	{
@@ -252,11 +252,6 @@ std::pair<InterpreterValue, bool> Interpreter::BeginInterpret(const std::unique_
 	}
 
 	return { InterpreterValue(), false };
-}
-
-InterpreterValue Interpreter::Interpret(const ASTNode &node)
-{
-	return InterpreterValue();
 }
 
 InterpreterValue Interpreter::Interpret(const ExprNode &node)
