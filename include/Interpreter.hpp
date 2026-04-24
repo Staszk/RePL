@@ -2,15 +2,15 @@
 #define REPL_INTERPRETER_HPP
 
 #include <string_view>
-#include <variant>
+
 #include <string>
 #include <memory>
-#include "Token.hpp"
+#include "Environment.hpp"
 
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-using InterpreterValue = std::variant<std::monostate, int64_t, float, std::string, bool, nullptr_t>;
+//using InterpreterValue = std::variant<std::monostate, int64_t, float, std::string, bool, nullptr_t>;
 
 class InterpreterError : public std::exception
 {
@@ -45,10 +45,12 @@ public:
 	InterpreterValue Interpret(const class GroupingExprNode& node);
 
 	void Execute(const std::unique_ptr<class StmntNode>& arNodePtr);
+	void Execute(const class VarDeclStmntNode& arNodePtr);
 
 	static inline InterpreterError GenerateError(const std::string_view aMessage);
 private:
 	InterpreterValue PreviousResult{};
+	Environment Env;
 };
 
 #endif // REPL_INTERPRETER_HPP

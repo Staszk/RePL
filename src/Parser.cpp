@@ -239,11 +239,6 @@ std::unique_ptr<StmntNode> Parser::ParseDeclaration()
 {
 	try
 	{
-		if (Match({TokenKind::Identifier}))
-		{
-			return ParseVarDeclaration();
-		}
-
 		return ParseStatement();
 	}
 	catch(const ParserError& e)
@@ -261,21 +256,26 @@ std::unique_ptr<StmntNode> Parser::ParseDeclaration()
 
 std::unique_ptr<StmntNode> Parser::ParseVarDeclaration()
 {
-	const Token& identifier = Peek(-1);
-	RequireWhitespace("Variable declaration requires whitespace before ':'");
-	Consume(TokenKind::Colon, "Expected ':' after identifier");
-	if (Match({TokenKind::KeywordLiteral}))
+	if (Peek(1).Kind == TokenKind::Colon)
 	{
-		std::cout << Peek(-1).Value << std::endl;
-	}
+		Consume(TokenKind::Identifier, "Expect identifier before ':'");
+		const Token& identifier = Peek(-1);
+		RequireWhitespace("Variable declaration requires whitespace before ':'");
+		Consume(TokenKind::Colon, "Expected ':' after identifier");
+		if (Match({TokenKind::KeywordLiteral}))
+		{
+			std::cout << Peek(-1).Value << std::endl;
+		}
 
-	std::unique_ptr<ExprNode> initializer = nullptr;
-	if (Match({TokenKind::Colon, TokenKind::Equal}))
-	{
-		initializer = ParseExpression();
+		std::unique_ptr<ExprNode> initializer = nullptr;
+		if (Match({TokenKind::Colon, TokenKind::Equal}))
+		{
+			initializer = ParseExpression();
+		}
+		Consume(TokenKind::Semicolon, "Expect ';' after declaration");
+		return std::make_unique<VarDeclStmntNode>(identifier, std::move(initializer));
 	}
-	Consume(TokenKind::Semicolon, "Expect ';' after declaration");
-	return std::make_unique<VarDeclStmntNode>(identifier, std::move(initializer));
+	return ParseExprStmnt();
 }
 
 std::unique_ptr<StmntNode> Parser::ParseStatement()
@@ -286,6 +286,10 @@ std::unique_ptr<StmntNode> Parser::ParseStatement()
 		{
 			return ParsePrintStmnt();
 		}
+	}
+	else if (Check(TokenKind::Identifier))
+	{
+		return ParseVarDeclaration();
 	}
 
 	return ParseExprStmnt();

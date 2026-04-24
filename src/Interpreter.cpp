@@ -276,7 +276,8 @@ InterpreterValue Interpreter::Interpret(const StringLiteralExprNode &node)
 
 InterpreterValue Interpreter::Interpret(const IdentifierExprNode &node)
 {
-	return std::string(node.ValueToken.Value);
+	InterpreterValue value = Env.Get(node.ValueToken);
+	return Env.Get(node.ValueToken);
 }
 
 InterpreterValue Interpreter::Interpret(const BinaryExprNode &node)
@@ -337,6 +338,17 @@ InterpreterValue Interpreter::Interpret(const GroupingExprNode &node)
 void Interpreter::Execute(const std::unique_ptr<StmntNode>& arNodePtr)
 {
 	arNodePtr->Accept(*this);
+}
+
+void Interpreter::Execute(const VarDeclStmntNode &arNodePtr)
+{
+	InterpreterValue value{};
+	if (arNodePtr.Expression)
+	{
+		value = arNodePtr.Expression->Accept(*this);
+	}
+
+	Env.Define(arNodePtr.IdentifierToken.Value, value);
 }
 
 InterpreterError Interpreter::GenerateError(const std::string_view aMessage)

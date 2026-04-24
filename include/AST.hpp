@@ -325,7 +325,7 @@ public:
 	 * @return A string representation of this print statement node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return Expression->Accept(apPrinter); }
-	void Accept(Interpreter& apInterpreter) const override final { std::cout << std::visit(Interpreter::Printer, Expression->Accept(apInterpreter)) << std::endl; }
+	void Accept(Interpreter& apInterpreter) const override final { apInterpreter.Execute(*this); }
 
 private:
 	const Token& IdentifierToken;
