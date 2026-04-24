@@ -8,6 +8,7 @@
 #include <string_view>
 #include <assert.h>
 #include <iostream>
+#include <optional>
 
 /**
  * @brief Kinds of AST nodes in the parser.
@@ -263,8 +264,8 @@ public:
 	 * @param apPrinter The AST printer visitor to accept.
 	 * @return A string representation of this statement node.
 	 */
-	virtual std::string Accept(ASTPrinter *apPrinter) const = 0;
-	virtual void Accept(Interpreter& apInterpreter) const = 0;
+	virtual std::string Accept(ASTPrinter *apPrinter) const { return "Error\n"; };
+	virtual void Accept(Interpreter& apInterpreter) const {};
 
 protected:
 	StmntNodeKind Kind;
@@ -307,6 +308,28 @@ public:
 	void Accept(Interpreter& apInterpreter) const override final { std::cout << std::visit(Interpreter::Printer, Expression->Accept(apInterpreter)) << std::endl; }
 
 private:
+	std::unique_ptr<ExprNode> Expression;
+};
+
+class VarDeclStmntNode : public StmntNode
+{
+	friend class ASTPrinter;
+	friend class Interpreter;
+public:
+	VarDeclStmntNode(const Token& arToken, std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::VarDeclStmnt), IdentifierToken(arToken), Expression(std::move(aExprNode)) {}
+	
+	/**
+	 * @brief Accept a visitor to print this print statement node.
+	 * 
+	 * @param apPrinter The AST printer visitor to accept.
+	 * @return A string representation of this print statement node.
+	 */
+	std::string Accept(ASTPrinter *apPrinter) const override { return Expression->Accept(apPrinter); }
+	void Accept(Interpreter& apInterpreter) const override final { std::cout << std::visit(Interpreter::Printer, Expression->Accept(apInterpreter)) << std::endl; }
+
+private:
+	const Token& IdentifierToken;
+	//std::optional<Token> TypeToken;
 	std::unique_ptr<ExprNode> Expression;
 };
 

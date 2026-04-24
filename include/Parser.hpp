@@ -55,6 +55,8 @@ private:
 	std::unique_ptr<ExprNode> ParseUnary();
 	std::unique_ptr<ExprNode> ParsePrimary();
 
+	std::unique_ptr<StmntNode> ParseDeclaration();
+	std::unique_ptr<StmntNode> ParseVarDeclaration();
 	std::unique_ptr<StmntNode> ParseStatement();
 	std::unique_ptr<StmntNode> ParseExprStmnt();
 	std::unique_ptr<StmntNode> ParsePrintStmnt();

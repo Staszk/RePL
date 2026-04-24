@@ -30,20 +30,9 @@ Parser::Parser(const std::vector<Token>& arTokens)
  */
 void Parser::Parse() 
 {
-	try
+	while (CursorValid())
 	{
-		while (CursorValid())
-		{
-			Program.emplace_back(ParseStatement());
-		}
-	}
-	catch(const ParserError& e)
-	{
-		std::cout << std::format("{} Error: {} at {}\n", e.ErrorType == ParserError::Type::Parser ? "Parser" : "Syntax", e.Message, TokenHelpers::LocationToText(e.Loc));
-	}
-	catch(const std::exception& e)
-	{
-		std::cout << std::format("Uncaptured Parser Exception: {}\n", e.what());
+		Program.emplace_back(ParseDeclaration());
 	}
 }
 
@@ -244,6 +233,49 @@ std::unique_ptr<ExprNode> Parser::ParsePrimary()
 	}
 
 	throw GenerateError("Expected expression", Peek().Loc);
+}
+
+std::unique_ptr<StmntNode> Parser::ParseDeclaration()
+{
+	try
+	{
+		if (Match({TokenKind::Identifier}))
+		{
+			return ParseVarDeclaration();
+		}
+
+		return ParseStatement();
+	}
+	catch(const ParserError& e)
+	{
+		std::cout << std::format("{} Error: {} at {}\n", e.ErrorType == ParserError::Type::Parser ? "Parser" : "Syntax", e.Message, TokenHelpers::LocationToText(e.Loc));
+		Synchronize();
+		return std::make_unique<StmntNode>();
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << std::format("Uncaptured Parser Exception: {}\n", e.what());
+		return std::make_unique<StmntNode>();
+	}
+}
+
+std::unique_ptr<StmntNode> Parser::ParseVarDeclaration()
+{
+	const Token& identifier = Peek(-1);
+	RequireWhitespace("Variable declaration requires whitespace before ':'");
+	Consume(TokenKind::Colon, "Expected ':' after identifier");
+	if (Match({TokenKind::KeywordLiteral}))
+	{
+		std::cout << Peek(-1).Value << std::endl;
+	}
+
+	std::unique_ptr<ExprNode> initializer = nullptr;
+	if (Match({TokenKind::Colon, TokenKind::Equal}))
+	{
+		initializer = ParseExpression();
+	}
+	Consume(TokenKind::Semicolon, "Expect ';' after declaration");
+	return std::make_unique<VarDeclStmntNode>(identifier, std::move(initializer));
 }
 
 std::unique_ptr<StmntNode> Parser::ParseStatement()

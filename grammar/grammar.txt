@@ -1,4 +1,11 @@
-program				->	statement* EOF
+program				->	declaration* EOF
+					;
+
+declaration			->	varDecl
+					|	statement
+					;
+
+varDecl				->	identifier ":" type? (":" | "=") expression ";"
 					;
 
 statement			->	expressionStmnt
