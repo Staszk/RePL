@@ -16,7 +16,6 @@ public:
 	std::string Print(const class UnaryExprNode& node);
 	std::string Print(const class GroupingExprNode& node);
 	std::string Parenthesize(const std::string_view name, std::initializer_list<const class ExprNode*> children);
-
 };
 
 #endif // REPL_ASTPRINTER_HPP

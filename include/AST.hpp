@@ -4,6 +4,7 @@
 #include "ASTPrinter.hpp"
 #include "Interpreter.hpp"
 #include "Token.hpp"
+#include "Keywords.hpp"
 #include <memory>
 #include <string_view>
 #include <assert.h>
@@ -305,7 +306,7 @@ public:
 	 * @return A string representation of this print statement node.
 	 */
 	std::string Accept(ASTPrinter *apPrinter) const override { return Expression->Accept(apPrinter); }
-	void Accept(Interpreter& apInterpreter) const override final { std::cout << std::visit(Interpreter::Printer, Expression->Accept(apInterpreter)) << std::endl; }
+	void Accept(Interpreter& apInterpreter) const override final { std::cout << apInterpreter.PrintValue(Expression->Accept(apInterpreter)) << std::endl; }
 
 private:
 	std::unique_ptr<ExprNode> Expression;
@@ -316,7 +317,7 @@ class VarDeclStmntNode : public StmntNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	VarDeclStmntNode(const Token& arToken, std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::VarDeclStmnt), IdentifierToken(arToken), Expression(std::move(aExprNode)) {}
+	VarDeclStmntNode(const Token& arToken, uint8_t aSpecifier, std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::VarDeclStmnt), IdentifierToken(arToken), Specifier(aSpecifier), Expression(std::move(aExprNode)) {}
 	
 	/**
 	 * @brief Accept a visitor to print this print statement node.
@@ -329,7 +330,7 @@ public:
 
 private:
 	const Token& IdentifierToken;
-	//std::optional<Token> TypeToken;
+	uint8_t Specifier;
 	std::unique_ptr<ExprNode> Expression;
 };
 

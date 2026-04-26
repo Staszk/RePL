@@ -10,8 +10,6 @@
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-//using InterpreterValue = std::variant<std::monostate, int64_t, float, std::string, bool, nullptr_t>;
-
 class InterpreterError : public std::exception
 {
 public:
@@ -24,15 +22,8 @@ public:
 class Interpreter
 {
 public:
-	static constexpr auto Printer = overloaded 
-	{
-		[](std::monostate) { return std::string("null"); },
-		[](int64_t intValue) { return std::to_string(intValue); },
-		[](float floatValue) { return std::to_string(floatValue); },
-		[](const std::string& stringValue) { return stringValue; },
-		[](bool boolValue) { return std::string(boolValue ? "True" : "False"); },
-		[](nullptr_t) { return std::string("null"); }
-	};
+
+	std::string PrintValue(InterpreterValue aVal);
 
 	InterpreterValue Interpret(const class ExprNode& node);
 	InterpreterValue Interpret(const class KeywordLiteralExprNode& node);

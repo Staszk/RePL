@@ -26,7 +26,7 @@ enum class TokenKind : uint8_t
 	Identifier,
 
 	// Literals
-	KeywordLiteral, IntLiteral, FloatLiteral, HalfFloatLiteral, StringLiteral, CharLiteral,
+	TypeLiteral, KeywordLiteral, IntLiteral, FloatLiteral, HalfFloatLiteral, StringLiteral, CharLiteral,
 
 	// Preprocessor
 	Preprocessor,
@@ -80,6 +80,7 @@ struct Token
 	TokenKind Kind;
 	TokenLocation Loc;
 	std::string_view Value;
+	uint8_t TypeOrKeyword{0};
 };
 
 namespace TokenHelpers

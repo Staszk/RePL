@@ -12,6 +12,16 @@ namespace
 	template<typename T>
 	concept Numeric = std::is_arithmetic_v<T> && !std::is_same_v<T, bool>;
 
+	static constexpr auto Printer = overloaded 
+	{
+		[](std::monostate) { return std::string("null"); },
+		[]<Numeric T>(T numericValue) { return std::to_string(numericValue); },
+		[](const std::string& stringValue) { return stringValue; },
+		[](bool boolValue) { return std::string(boolValue ? "True" : "False"); },
+		[](nullptr_t) { return std::string("null"); },
+		[](auto) { return std::string("not implemented"); }
+	};
+
 	static constexpr auto PlusOp = overloaded
 	{
 		[](std::monostate, std::monostate) { return InterpreterValue(std::monostate{}); },
@@ -226,13 +236,16 @@ namespace
 	static constexpr auto TruthOp = overloaded
 	{
 		[](std::monostate) { return false; },
-		[](int64_t intValue) { return intValue != 0; },
-		[](float floatValue) { return floatValue != 0.0; },
+		[]<Numeric T>(T numericValue) { return numericValue != static_cast<T>(0); },
 		[](const std::string& stringValue) { return !stringValue.empty(); },
 		[](bool boolValue) { return boolValue; },
 		[](nullptr_t) { return false; }
 	};
+}
 
+std::string Interpreter::PrintValue(InterpreterValue aVal)
+{
+	return std::visit(Printer, aVal);
 }
 
 InterpreterValue Interpreter::Interpret(const ExprNode &node)
@@ -340,15 +353,15 @@ void Interpreter::Execute(const std::unique_ptr<StmntNode>& arNodePtr)
 	arNodePtr->Accept(*this);
 }
 
-void Interpreter::Execute(const VarDeclStmntNode &arNodePtr)
+void Interpreter::Execute(const VarDeclStmntNode &node)
 {
 	InterpreterValue value{};
-	if (arNodePtr.Expression)
+	if (node.Expression)
 	{
-		value = arNodePtr.Expression->Accept(*this);
+		value = node.Expression->Accept(*this);
 	}
 
-	Env.Define(arNodePtr.IdentifierToken.Value, value);
+	Env.Define(node.IdentifierToken.Value, static_cast<Types::TypeKind>(node.Specifier), value);
 }
 
 InterpreterError Interpreter::GenerateError(const std::string_view aMessage)

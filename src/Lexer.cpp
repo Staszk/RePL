@@ -1,4 +1,6 @@
 #include "Lexer.hpp"
+#include "Keywords.hpp"
+#include "Types.hpp"
 #include <algorithm>
 #include <format>
 #include <iostream>
@@ -35,34 +37,6 @@ namespace
 	constexpr unsigned char ToUChar(char c) noexcept
 	{
 		return static_cast<unsigned char>(c);
-	}
-
-	constexpr std::array<std::string_view, 13> KeywordLiterals =
-	{
-		"_",
-		"break",
-		"continue",
-		"else",
-		"for",
-		"if",
-		"struct",
-		"while",
-		"until",
-		"void",
-		"true",
-		"false",
-		"print",
-	};
-
-	/**
-	 * @brief Check if a string value is a reserved keyword.
-	 *
-	 * @param value The string value to check.
-	 * @return True if the value is a keyword, false otherwise.
-	 */
-	bool IsKeywordLiteral(std::string_view value)
-	{
-		return std::find(KeywordLiterals.begin(), KeywordLiterals.end(), value) != KeywordLiterals.end();
 	}
 
 	constexpr std::array<TokenLiteralInfo, 256> MakeTokenLiteralInfo()
@@ -491,11 +465,22 @@ void Lexer::ConsumeIdentifierOrKeywordToken(Token& arToken)
 	{
 		Advance();
 	}
-
+	
 	arToken.Value = Content.substr(begin, Cursor - begin);
-
-	arToken.Kind = IsKeywordLiteral(arToken.Value) ? TokenKind::KeywordLiteral : TokenKind::Identifier;
 	arToken.Loc = { LineIdx, begin - StartOfLine };
+	
+	if (Types::GetTypeKind(arToken.Value, arToken.TypeOrKeyword))
+	{
+		arToken.Kind = TokenKind::TypeLiteral;
+	}
+	else if (Keywords::GetKeywordKind(arToken.Value, arToken.TypeOrKeyword))
+	{
+		arToken.Kind = TokenKind::KeywordLiteral;
+	}
+	else
+	{
+		arToken.Kind = TokenKind::Identifier;
+	}
 }
 
 /**
