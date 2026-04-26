@@ -15,6 +15,7 @@ namespace
 	static constexpr auto Printer = overloaded 
 	{
 		[](std::monostate) { return std::string("null"); },
+		[](char charValue) { return std::string{charValue}; },
 		[]<Numeric T>(T numericValue) { return std::to_string(numericValue); },
 		[](const std::string& stringValue) { return stringValue; },
 		[](bool boolValue) { return std::string(boolValue ? "True" : "False"); },
