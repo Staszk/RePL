@@ -262,7 +262,8 @@ std::unique_ptr<StmntNode> Parser::ParseDeclaration()
 
 std::unique_ptr<StmntNode> Parser::ParseVarDeclaration()
 {
-	uint8_t type;
+	uint8_t type = Types::UnspecifiedTypeIDX;
+	bool isConst = false;
 
 	Consume(TokenKind::Identifier, "Expect identifier before ':'");
 	const Token& identifier = Peek(-1);
@@ -282,17 +283,18 @@ std::unique_ptr<StmntNode> Parser::ParseVarDeclaration()
 	std::unique_ptr<ExprNode> initializer = nullptr;
 	if (Match({TokenKind::Colon, TokenKind::Equal}))
 	{
+		isConst = Peek(-1).Kind == TokenKind::Colon;
 		RequireWhitespace("Variable declaration requires whitespace before initialization expression");
 		initializer = ParseExpression();
 	}
 	Consume(TokenKind::Semicolon, "Expect ';' after declaration");
 
-	if (type == Types::InvalidTypeIDX && !initializer)
+	if (type == Types::UnspecifiedTypeIDX && !initializer)
 	{
 		throw GenerateError("Variable declaration requires either a type or initial value", Peek().Loc);
 	}
 
-	return std::make_unique<VarDeclStmntNode>(identifier, type, std::move(initializer));
+	return std::make_unique<VarDeclStmntNode>(identifier, type, isConst, std::move(initializer));
 }
 
 std::unique_ptr<StmntNode> Parser::ParseStatement()

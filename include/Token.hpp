@@ -80,7 +80,7 @@ struct Token
 	TokenKind Kind;
 	TokenLocation Loc;
 	std::string_view Value;
-	uint8_t TypeOrKeyword{0};
+	uint8_t TypeOrKeyword{0u};
 };
 
 namespace TokenHelpers

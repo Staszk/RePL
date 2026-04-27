@@ -7,16 +7,15 @@
 #include "Token.hpp"
 #include "Types.hpp"
 
-
 using InterpreterValue = std::variant
 	<
-		std::monostate, 
-		uint8_t, uint16_t, uint32_t, uint64_t,
+		opaque, 
+		uint08, uint16, uint32, uint64,
 		int8_t, int16_t, int32_t, int64_t,
-		float, double,
-		std::string, char,
-		bool, 
-		nullptr_t
+		real32, real64,
+		std::string, char08,
+		binary, 
+		nilptr
 	>;
 
 struct Symbol
@@ -30,7 +29,7 @@ class Environment
 {
 public:
 	InterpreterValue Get(const Token& arIdentifier);
-	void Define(std::string_view aView, Types::TypeKind aType, InterpreterValue aValue);
+	void Define(std::string_view aView, Types::TypeKind aType, bool abIsConst, InterpreterValue aValue);
 
 private:
 	std::map<std::string, Symbol> EnvironmentSymbols;

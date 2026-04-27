@@ -317,7 +317,7 @@ class VarDeclStmntNode : public StmntNode
 	friend class ASTPrinter;
 	friend class Interpreter;
 public:
-	VarDeclStmntNode(const Token& arToken, uint8_t aSpecifier, std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::VarDeclStmnt), IdentifierToken(arToken), Specifier(aSpecifier), Expression(std::move(aExprNode)) {}
+	VarDeclStmntNode(const Token& arToken, uint8_t aSpecifier, bool abIsConst, std::unique_ptr<ExprNode> aExprNode) : StmntNode(StmntNodeKind::VarDeclStmnt), IdentifierToken(arToken), Specifier(aSpecifier), IsConst(abIsConst), Expression(std::move(aExprNode)) {}
 	
 	/**
 	 * @brief Accept a visitor to print this print statement node.
@@ -331,6 +331,7 @@ public:
 private:
 	const Token& IdentifierToken;
 	uint8_t Specifier;
+	bool IsConst;
 	std::unique_ptr<ExprNode> Expression;
 };
 
