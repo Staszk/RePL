@@ -5,6 +5,7 @@
 #include <format>
 #include <iostream>
 #include <assert.h>
+#include <map>
 
 namespace
 {
@@ -76,8 +77,24 @@ namespace
 
 		return info;
 	}
-
 	constexpr auto TokenLiteralInfoTable = MakeTokenLiteralInfo();
+
+	using namespace std::literals::string_view_literals;
+	const std::map<std::string_view, TokenKind> TypeSuffixes =
+	{{
+		{"um"sv, TokenKind::Uint08Literal},
+		{"us"sv, TokenKind::Uint16Literal},
+		{"ut"sv, TokenKind::Uint32Literal},
+		{"ul"sv, TokenKind::Uint64Literal},
+		{"sm"sv, TokenKind::Sint08Literal},
+		{"ss"sv, TokenKind::Sint16Literal},
+		{"st"sv, TokenKind::Sint32Literal},
+		{"sl"sv, TokenKind::Sint64Literal},
+		{"rm"sv, TokenKind::Real08Literal},
+		{"rs"sv, TokenKind::Real16Literal},
+		{"rt"sv, TokenKind::Real32Literal},
+		{"rl"sv, TokenKind::Real64Literal},
+	}};
 
 	/**
 	 * @brief Determine whether a character may start an identifier.
@@ -334,7 +351,7 @@ std::pair<TokenKind, size_t> Lexer::GatherTokenLiteral()
  */
 bool Lexer::IsNumericLiteralStart()
 {
-	return std::isdigit(ToUChar(PeekCursor()));
+	return std::isdigit(ToUChar(PeekCursor())) || PeekCursor() == '.';
 }
 
 /**
@@ -421,16 +438,17 @@ void Lexer::ConsumeTokenLiteral(Token& arToken, TokenKind aKind, size_t aLength)
 void Lexer::ConsumeNumericLiteralToken(Token& arToken)
 {
 	const size_t begin = Cursor;
-	Advance(); // Consume first digit
 	while (CursorValid() && std::isdigit(ToUChar(PeekCursor())))
 	{
 		Advance();
 	}
 
+	TokenKind numericKind = TokenKind::Sint32Literal;
 	bool isFloat = false;
 	if (CursorValid() && PeekCursor() == '.' && std::isdigit(ToUChar(PeekAt(1))))
 	{
 		isFloat = true;
+		numericKind = TokenKind::Real32Literal;
 		Advance(); // Consume decimal point
 		while (CursorValid() && std::isdigit(ToUChar(PeekCursor())))
 		{
@@ -438,16 +456,16 @@ void Lexer::ConsumeNumericLiteralToken(Token& arToken)
 		}
 	}
 
-	if (isFloat && CursorValid() && PeekCursor() == 'h')
+	// Test next two characters for a suffix
+	std::string suffix = { PeekCursor(), PeekAt(1) };
+	if (TypeSuffixes.contains(suffix))
 	{
-		arToken.Kind = TokenKind::HalfFloatLiteral;
-		Advance(); // Consume the half-float suffix
-	}
-	else
-	{
-		arToken.Kind = isFloat ? TokenKind::FloatLiteral : TokenKind::IntLiteral;
+		numericKind = TypeSuffixes.at(suffix);
+		Advance();
+		Advance();
 	}
 
+	arToken.Kind = numericKind;
 	arToken.Value = Content.substr(begin, Cursor - begin);
 	arToken.Loc = { LineIdx, begin - StartOfLine };
 }
@@ -553,7 +571,7 @@ void Lexer::ConsumeStringLiteralToken(Token& arToken)
  */
 void Lexer::ConsumeCharLiteralToken(Token& arToken)
 {
-	arToken.Kind = TokenKind::CharLiteral;
+	arToken.Kind = TokenKind::Char08Literal;
 	const size_t begin = Cursor;
 	Advance(); // Consume opening quote
 	if (CursorValid())

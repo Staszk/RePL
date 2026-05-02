@@ -31,7 +31,7 @@ std::string ASTPrinter::Print(const class KeywordLiteralExprNode& arNode)
  * @param arNode The integer literal expression node to print.
  * @return A string representation of the integer literal expression node.
  */
-std::string ASTPrinter::Print(const class IntLiteralExprNode& arNode)
+std::string ASTPrinter::Print(const class NumericLiteralExprNode& arNode)
 {
 	return std::string(arNode.ValueToken.Value);
 }

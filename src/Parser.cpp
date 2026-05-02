@@ -1,5 +1,4 @@
 #include "Parser.hpp"
-#include "ASTPrinter.hpp"
 #include "Keywords.hpp"
 #include <stdexcept>
 #include <iostream>
@@ -199,20 +198,20 @@ std::unique_ptr<ExprNode> Parser::ParseUnary()
  */
 std::unique_ptr<ExprNode> Parser::ParsePrimary()
 {
-	if (Match({TokenKind::IntLiteral}))
+	if (Peek().Kind >= TokenKind::NumericLiteralBegin && Peek().Kind <= TokenKind::NumericLiteralEnd)
 	{
-		const Token& intToken = Peek(-1);
-		return std::make_unique<IntLiteralExprNode>(intToken);
-	}
-	else if (Match({TokenKind::FloatLiteral}))
-	{
-		const Token& floatToken = Peek(-1);
-		return std::make_unique<FloatLiteralExprNode>(floatToken);
+		const Token& intToken = Advance();
+		return std::make_unique<NumericLiteralExprNode>(intToken);
 	}
 	else if (Match({TokenKind::StringLiteral}))
 	{
 		const Token& stringToken = Peek(-1);
 		return std::make_unique<StringLiteralExprNode>(stringToken);
+	}
+	else if (Match({TokenKind::Char08Literal}))
+	{
+		const Token& stringToken = Peek(-1);
+		return std::make_unique<StringLiteralExprNode>(stringToken); // TODO: Char Expr Node
 	}
 	else if (Match({TokenKind::Identifier}))
 	{

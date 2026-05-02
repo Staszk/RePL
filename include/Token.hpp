@@ -26,7 +26,13 @@ enum class TokenKind : uint8_t
 	Identifier,
 
 	// Literals
-	TypeLiteral, KeywordLiteral, IntLiteral, FloatLiteral, HalfFloatLiteral, StringLiteral, CharLiteral,
+	TypeLiteral, KeywordLiteral,
+	Uint08Literal, Uint16Literal, Uint32Literal, Uint64Literal,
+	Sint08Literal, Sint16Literal, Sint32Literal, Sint64Literal,
+	Real08Literal, Real16Literal, Real32Literal, Real64Literal,
+	StringLiteral, Char08Literal,
+	BinaryLiteral,
+	NilPtrLiteral,
 
 	// Preprocessor
 	Preprocessor,
@@ -48,6 +54,10 @@ enum class TokenKind : uint8_t
 	/// Scopes and Grouping
 	OpenParen, CloseParen, OpenCurly, CloseCurly,
 	OpenBracket, CloseBracket,
+
+	Count,
+	NumericLiteralBegin = Uint08Literal,
+	NumericLiteralEnd = NilPtrLiteral,
 };
 
 /**

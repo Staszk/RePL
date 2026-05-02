@@ -39,10 +39,10 @@ namespace
 		{
 			string result(left);
 			size_t pos = 0;
-    		if ((pos = result.find(right, pos)) != string::npos) 
+			if ((pos = result.find(right, pos)) != string::npos) 
 			{
-        		result.erase(pos, right.length());
-    		};
+				result.erase(pos, right.length());
+			};
 
 			return InterpreterValue(result);
 		},
@@ -93,10 +93,10 @@ namespace
 		{
 			string result(left);
 			size_t pos = 0;
-    		while ((pos = result.find(right, pos)) != string::npos) 
+			while ((pos = result.find(right, pos)) != string::npos) 
 			{
-        		result.erase(pos, right.length());
-    		};
+				result.erase(pos, right.length());
+			};
 
 			return InterpreterValue(result);
 		},
@@ -246,24 +246,24 @@ namespace
 	// Get Inferred Type
 	static constexpr auto InferTypeOp = overloaded 
 	{
-        [](opaque) 			{ return Types::TypeKind::Opaque; },
-        [](uint08) 			{ return Types::TypeKind::Uint08; },
-        [](uint16) 			{ return Types::TypeKind::Uint16; },
-        [](uint32) 			{ return Types::TypeKind::Uint32; },
-        [](uint64) 			{ return Types::TypeKind::Uint64; },
-        [](sint08) 			{ return Types::TypeKind::Sint08; },
-        [](sint16) 			{ return Types::TypeKind::Sint16; },
-        [](sint32) 			{ return Types::TypeKind::Sint32; },
-        [](sint64) 			{ return Types::TypeKind::Sint64; },
-        [](real32) 			{ return Types::TypeKind::Real32; },
-        [](real64) 			{ return Types::TypeKind::Real64; },
-        [](const string&) 	{ return Types::TypeKind::String; },
-        [](char08) 			{ return Types::TypeKind::Char08; },
-        [](binary) 			{ return Types::TypeKind::Opaque; },
+		[](opaque) 			{ return Types::TypeKind::Opaque; },
+		[](uint08) 			{ return Types::TypeKind::Uint08; },
+		[](uint16) 			{ return Types::TypeKind::Uint16; },
+		[](uint32) 			{ return Types::TypeKind::Uint32; },
+		[](uint64) 			{ return Types::TypeKind::Uint64; },
+		[](sint08) 			{ return Types::TypeKind::Sint08; },
+		[](sint16) 			{ return Types::TypeKind::Sint16; },
+		[](sint32) 			{ return Types::TypeKind::Sint32; },
+		[](sint64) 			{ return Types::TypeKind::Sint64; },
+		[](real32) 			{ return Types::TypeKind::Real32; },
+		[](real64) 			{ return Types::TypeKind::Real64; },
+		[](const string&) 	{ return Types::TypeKind::String; },
+		[](char08) 			{ return Types::TypeKind::Char08; },
+		[](binary) 			{ return Types::TypeKind::Opaque; },
 		[](nilptr) 			{ return Types::TypeKind::NilPtr; },
 
-        [](auto) { std::cout << "What?\n"; return Types::TypeKind::Opaque; }
-    };
+		[](auto) { std::cout << "What?\n"; return Types::TypeKind::Opaque; }
+	};
 
 }
 
@@ -286,11 +286,98 @@ InterpreterValue Interpreter::Interpret(const KeywordLiteralExprNode &node)
 	return string(node.ValueToken.Value);
 }
 
-InterpreterValue Interpreter::Interpret(const IntLiteralExprNode &node)
+InterpreterValue Interpreter::Interpret(const NumericLiteralExprNode &node)
 {
-	sint64 intValue;
-	std::from_chars(node.ValueToken.Value.data(), node.ValueToken.Value.data() + node.ValueToken.Value.size(), intValue);
-	return intValue;
+	const char* begin = node.ValueToken.Value.data();
+	const char* end = begin + node.ValueToken.Value.length();
+
+	switch (node.ValueToken.Kind) 
+	{
+		using enum TokenKind;
+	case Uint08Literal:
+	{
+		uint08 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid uint08");
+		return InterpreterValue(val);
+	}
+	case Uint16Literal:
+	{
+		uint16 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid uint16");
+		return InterpreterValue(val);
+	}
+	case Uint32Literal:
+	{
+		uint32 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid uint32");
+		return InterpreterValue(val);
+	}
+	case Uint64Literal:
+	{
+		uint64 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid uint64");
+		return InterpreterValue(val);
+	}
+	case Sint08Literal:
+	{
+		sint08 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid sint08");
+		return InterpreterValue(val);
+	}
+	case Sint16Literal:
+	{
+		sint16 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid sint16");
+		return InterpreterValue(val);
+	}
+	case Sint32Literal:
+	{
+		sint32 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid sint32");
+		return InterpreterValue(val);
+	}
+	case Sint64Literal:
+	{
+		sint64 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid sint64");
+		return InterpreterValue(val);
+	}
+	case Real08Literal:
+	{
+		throw GenerateError("Unsupported numeric type");
+		return InterpreterValue(opaque{});
+	}
+	case Real16Literal:
+	{
+		throw GenerateError("Unsupported numeric type");
+		return InterpreterValue(opaque{});
+	}
+	case Real32Literal:
+	{
+		real32 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid real32");
+		return InterpreterValue(val);
+	}
+	case Real64Literal:
+	{
+		real64 val;
+		auto [ptr, ec] = std::from_chars(begin, end, val);
+		if (ec != std::errc()) throw GenerateError("Invalid real64");
+		return InterpreterValue(val);
+	}
+	default:
+		throw GenerateError("Unsupported numeric type");
+		return InterpreterValue(opaque{});
+	}
 }
 
 InterpreterValue Interpreter::Interpret(const FloatLiteralExprNode &node)

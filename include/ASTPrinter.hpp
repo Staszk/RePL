@@ -8,7 +8,7 @@ class ASTPrinter
 public:
 	std::string Print(const class ExprNode& node);
 	std::string Print(const class KeywordLiteralExprNode& node);
-	std::string Print(const class IntLiteralExprNode& node);
+	std::string Print(const class NumericLiteralExprNode& node);
 	std::string Print(const class FloatLiteralExprNode& node);
 	std::string Print(const class StringLiteralExprNode& node);
 	std::string Print(const class IdentifierExprNode& node);

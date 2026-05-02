@@ -27,7 +27,7 @@ public:
 
 	InterpreterValue Interpret(const class ExprNode& node);
 	InterpreterValue Interpret(const class KeywordLiteralExprNode& node);
-	InterpreterValue Interpret(const class IntLiteralExprNode& node);
+	InterpreterValue Interpret(const class NumericLiteralExprNode& node);
 	InterpreterValue Interpret(const class FloatLiteralExprNode& node);
 	InterpreterValue Interpret(const class StringLiteralExprNode& node);
 	InterpreterValue Interpret(const class IdentifierExprNode& node);

@@ -45,11 +45,11 @@ namespace TokenHelpers
 	    
 	    // Literals
 	    case KeywordLiteral:    return "KeywordLiteral";
-	    case IntLiteral:        return "IntLiteral";
-	    case FloatLiteral:      return "FloatLiteral";
-	    case HalfFloatLiteral:  return "HalfFloatLiteral";
+	    case Sint64Literal:        return "IntLiteral";
+	    case Real32Literal:      return "FloatLiteral";
+	    case Real16Literal:  return "HalfFloatLiteral";
 	    case StringLiteral:     return "StringLiteral";
-	    case CharLiteral:       return "CharLiteral";
+	    case Char08Literal:       return "CharLiteral";
 
 	    // Preprocessor
 	    case Preprocessor:      return "Preprocessor";
